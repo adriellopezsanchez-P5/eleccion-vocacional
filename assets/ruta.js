@@ -14,12 +14,12 @@
   }
 
   const PASOS = [
-    { n: 0, archivo: 'index.html', corto: 'Inicio' },
+    { n: 0, archivo: 'index.html', corto: 'Tus datos' },
     { n: 1, archivo: 'paso1-herrera-montes.html', corto: 'Herrera y Montes', clave: 'hm' },
     { n: 2, archivo: 'paso2-interpretacion.html', corto: 'Interpretación', clave: 'interp' },
     { n: 3, archivo: 'paso3-evapem.html', corto: 'EVAPEM', clave: 'evapem' },
     { n: 4, archivo: 'paso4-optativas.html', corto: 'Optativas', clave: 'optativas' },
-    { n: 5, archivo: 'paso5-mi-ruta.html', corto: 'Mi ruta' }
+    { n: 5, archivo: 'paso5-mi-ruta.html', corto: 'Mi reporte' }
   ];
 
   const Ruta = {
@@ -38,26 +38,35 @@
     /* Encabezado común con la ruta de pasos */
     montarEncabezado(pasoActual) {
       const a = Ruta.alumno();
-      const barra = document.createElement('header');
-      barra.className = 'barra';
-      barra.innerHTML = `<div class="contenedor">
-          <a class="marca" href="index.html">Ruta Vocacional<small>Orientación Educativa · Plantel "Dr. Ángel Ma. Garibay Kintana" · UAEMéx</small></a>
-          <div class="alumno">${a ? Ruta.esc(a.nombre) + '<br><small>Grupo ' + Ruta.esc(a.grupo) + '</small>' : '<small>Sin datos del alumno</small>'}</div>
+      const sitio = document.createElement('header');
+      sitio.className = 'sitio';
+      sitio.innerHTML = `<div class="sitio-in">
+          <a class="logo" href="index.html" aria-label="Elección Vocacional, inicio">
+            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M5 23 C 11 23, 10 8, 16 8 S 22 15, 25 7" fill="none" stroke="#2346D8" stroke-width="3.5" stroke-linecap="round"/><circle cx="5" cy="23" r="3.6" fill="#F0B429"/><circle cx="25" cy="7" r="3.6" fill="#0E1B33"/></svg>
+            Elección Vocacional</a>
+          <nav class="menu" aria-label="Sitio">
+            <a href="index.html" ${pasoActual === 0 ? 'aria-current="page"' : ''}>Cómo funciona</a>
+            <a href="paso4-optativas.html" ${pasoActual === 4 ? 'aria-current="page"' : ''}>Optativas</a>
+            <a href="paso5-mi-ruta.html" ${pasoActual === 5 ? 'aria-current="page"' : ''}>Mi reporte</a>
+          </nav>
+          <div class="usuario">${a ? '<b>' + Ruta.esc(a.nombre) + '</b>Grupo ' + Ruta.esc(a.grupo) : '<a href="index.html#ficha">Registrar mis datos</a>'}</div>
         </div>`;
       const nav = document.createElement('nav');
-      nav.className = 'pasos';
+      nav.className = 'trayecto';
       nav.setAttribute('aria-label', 'Pasos de la ruta');
       nav.innerHTML = '<ol>' + PASOS.map(p => {
-        const hecho = p.clave && Ruta.completo(p.clave);
-        const cls = (p.n === pasoActual ? 'actual ' : '') + (hecho ? 'hecho' : '');
-        return `<li><a class="${cls}" href="${p.archivo}" ${p.n === pasoActual ? 'aria-current="step"' : ''}>
-          <span class="num">${hecho ? '✓' : (p.n === 0 ? '⌂' : p.n)}</span>${p.corto}</a></li>`;
+        const hecho = p.n === 0 ? !!a : (p.clave ? Ruta.completo(p.clave) : false);
+        const cls = [p.n === pasoActual ? 'actual' : '', hecho ? 'hecho' : ''].join(' ').trim();
+        return `<li class="${cls}"><a href="${p.archivo}" ${p.n === pasoActual ? 'aria-current="step"' : ''}>
+          <span class="parada">${hecho && p.n !== pasoActual ? '✓' : (p.n === 0 ? '' : p.n)}</span><span class="txt">${p.corto}</span>
+          <span class="sr">${hecho ? '(completado)' : ''}</span></a></li>`;
       }).join('') + '</ol>';
       document.body.prepend(nav);
-      document.body.prepend(barra);
+      document.body.prepend(sitio);
       const pie = document.createElement('footer');
       pie.className = 'pie';
-      pie.innerHTML = 'Departamento de Orientación Educativa · Plantel "Dr. Ángel Ma. Garibay Kintana" · UAEMéx<br>Tus respuestas se guardan solo en este navegador.';
+      pie.innerHTML = `<div class="contenedor"><div><b>Elección Vocacional</b><br>Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx</div>
+        <div>Tus respuestas se guardan solo en este navegador.</div></div>`;
       document.body.append(pie);
     },
 

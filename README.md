@@ -1,6 +1,6 @@
-# Ruta Vocacional · Orientación Educativa
+# Elección Vocacional
 
-Plantel "Dr. Ángel Ma. Garibay Kintana" · UAEMéx
+Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx
 
 Esta ruta reúne en un solo sitio, y en orden, los cuatro instrumentos de orientación vocacional. Cada paso alimenta al siguiente y al final se genera un reporte integrado listo para imprimir.
 
@@ -18,7 +18,10 @@ Esta ruta reúne en un solo sitio, y en orden, los cuatro instrumentos de orient
 2. En GitHub: **Settings → Pages → Branch: `main` / carpeta `/ (root)`**.
 3. La ruta queda en `https://<usuario>.github.io/<repositorio>/`.
 
-No necesita servidor ni base de datos. No depende de librerías externas: las gráficas se dibujan con CSS.
+No necesita servidor ni base de datos. No depende de servicios externos: las gráficas se dibujan con CSS y las fuentes (Bricolage Grotesque y Source Sans 3, licencia SIL OFL) están incluidas en `assets/fuentes/`.
+
+## Diseño
+Toda la ruta usa una sola hoja de estilos, `assets/estilos.css`. Los colores se definen al inicio, en `:root`: azul tinta `#0E1B33`, cobalto `#2346D8`, ámbar `#F0B429` y gris niebla `#F3F5F8`. Si los cambias ahí, cambia todo el sitio.
 
 ## Privacidad
 Las respuestas se guardan solo en el navegador del alumno (`localStorage`) y no se envían a ningún lado. En el inicio hay un botón para borrar los datos; conviene usarlo en computadoras compartidas.

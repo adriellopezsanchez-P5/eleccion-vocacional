@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Paso 3 · Perfil vocacional EVAPEM IV</title>
+<title>Perfil vocacional EVAPEM IV | Elección Vocacional</title>
+<link rel="preload" href="assets/fuentes/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/estilos.css">
 </head>
 <body>
 <main class="contenedor" id="app">
-  <section class="tarjeta no-imprimir">
-    <span class="etiqueta">Paso 3 de 5</span>
+  <section class="intro no-imprimir">
+    <span class="paso">Paso 3 de 5</span>
     <h1>Perfil vocacional EVAPEM IV</h1>
     <p class="sub">Compara los rasgos más altos de tu gráfica EVAPEM con el perfil de ingreso de 80 opciones educativas.</p>
     <ol style="padding-left:20px;margin:10px 0">
@@ -31,18 +32,18 @@
   </section>
 
   <section id="resultados">
-    <div class="tarjeta solo-impresion"><strong>UAEMéx · Plantel "Dr. Ángel Ma. Garibay Kintana" · Departamento de Orientación Educativa</strong><br>Informe de Perfil Vocacional · EVAPEM IV</div>
+    <div class="tarjeta solo-impresion"><strong>Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx</strong><br>Informe de perfil vocacional (EVAPEM IV)</div>
     <div class="tarjeta solo-impresion"><p id="ficha-imp" style="margin:0"></p></div>
     <div id="aviso-incompleto" class="aviso info no-imprimir">Marca exactamente 10 rasgos para ver tus resultados.</div>
     <div id="bloque-res" class="oculto">
       <div class="tarjeta">
-        <span class="etiqueta">1 · Lo más importante</span>
+        
         <h2>Afinidad por área de conocimiento</h2>
         <p class="sub">Promedio de tu afinidad con las carreras de cada área. Un área alta es una buena señal aunque una carrera concreta no aparezca en tu top 10.</p>
         <div id="areas"></div>
       </div>
       <div class="tarjeta">
-        <span class="etiqueta">2 · Ranking</span>
+        
         <h2>Top 15 de compatibilidad</h2>
         <div style="overflow-x:auto"><table id="tabla-top"></table></div>
         <details class="no-imprimir" style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Ver las 80 opciones</summary><div style="overflow-x:auto"><table id="tabla-todas"></table></div></details>
@@ -54,8 +55,8 @@
       </div>
       <div class="aviso">Este análisis es una herramienta de apoyo para tu decisión y no debe tomarse como absoluto. Compleméntalo con tu reflexión personal y la guía de tu orientador(a).</div>
       <div class="acciones no-imprimir">
-        <a class="btn" href="paso4-optativas.html">Continuar al paso 4: Optativas →</a>
-        <button class="btn sec" type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+        <a class="btn" href="paso4-optativas.html">Continuar al paso 4: Optativas</a>
+        <button class="btn sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
       </div>
     </div>
   </section>
@@ -123,7 +124,7 @@ function calcular() {
   document.getElementById('tabla-top').innerHTML = cab + '<tbody>' + res.slice(0, 15).map(fila).join('') + '</tbody>';
   document.getElementById('tabla-todas').innerHTML = cab + '<tbody>' + res.map(fila).join('') + '</tbody>';
   const al = Ruta.alumno();
-  document.getElementById('ficha-imp').innerHTML = `<b>${Ruta.esc(al.nombre)}</b> · Grupo ${Ruta.esc(al.grupo)} · Orientador(a): ${Ruta.esc(al.docente)} · ${Ruta.fecha()}<br>Rasgos marcados: ${[...sel].sort((a, b) => a - b).join(', ')}`;
+  document.getElementById('ficha-imp').innerHTML = `<b>${Ruta.esc(al.nombre)}</b>, grupo ${Ruta.esc(al.grupo)}, Orientador(a): ${Ruta.esc(al.docente)}, ${Ruta.fecha()}<br>Rasgos marcados: ${[...sel].sort((a, b) => a - b).join(', ')}`;
   Ruta.guardar('evapem', { rasgos: [...sel], top: res.slice(0, 15).map(({ n, a, afin, m, req }) => ({ n, a, afin, m, req })), areas, completado: new Date().toISOString() });
 }
 </script>

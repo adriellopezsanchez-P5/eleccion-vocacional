@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Paso 2 · Interpretación vocacional (Herrera y Montes)</title>
+<title>Interpretación vocacional (Herrera y Montes) | Elección Vocacional</title>
+<link rel="preload" href="assets/fuentes/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/estilos.css">
 </head>
 <body>
 <main class="contenedor" id="app">
-  <section class="tarjeta no-imprimir">
-    <span class="etiqueta">Paso 2 de 5</span>
+  <section class="intro no-imprimir">
+    <span class="paso">Paso 2 de 5</span>
     <h1>Interpretación de tus resultados</h1>
     <p class="sub">Tus dos intereses más altos se buscan en la <b>Tabla de Combinaciones</b> y tu aptitud más alta en la <b>Tabla de Aptitudes con Opciones Educativas</b> del manual institucional.</p>
     <div id="origen"></div>
@@ -33,8 +34,8 @@
   <!-- Reporte -->
   <section id="reporte" class="oculto">
     <div class="tarjeta solo-impresion">
-      <strong>UAEMéx · Plantel "Dr. Ángel Ma. Garibay Kintana" · Departamento de Orientación Educativa</strong><br>
-      Reporte de Interpretación Vocacional · Herrera y Montes
+      <strong>Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx</strong><br>
+      Reporte de interpretación vocacional (Herrera y Montes)
     </div>
     <div class="tarjeta">
       <h2>Ficha</h2>
@@ -45,12 +46,12 @@
       <div class="tarjeta"><h2>Aptitud dominante</h2><div id="rep-apt"></div></div>
     </div>
     <div class="tarjeta">
-      <span class="etiqueta">Cruce 1 · Tabla de Combinaciones</span>
+      <span class="etiqueta">Según tus intereses (Tabla de Combinaciones)</span>
       <h2 id="rep-comb-tit"></h2>
       <div id="rep-comb"></div>
     </div>
     <div class="tarjeta">
-      <span class="etiqueta">Cruce 2 · Tabla de Aptitudes</span>
+      <span class="etiqueta">Según tu aptitud (Tabla de Aptitudes)</span>
       <h2 id="rep-apt-tit"></h2>
       <div id="rep-aptlist"></div>
     </div>
@@ -69,8 +70,8 @@
       </div>
     </div>
     <div class="acciones no-imprimir">
-      <a class="btn" href="paso3-evapem.html">Continuar al paso 3: EVAPEM →</a>
-      <button class="btn sec" type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+      <a class="btn" href="paso3-evapem.html">Continuar al paso 3: EVAPEM</a>
+      <button class="btn sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
     </div>
   </section>
 </main>
@@ -184,13 +185,13 @@ function buscarComb(a, b) { const x = NUM_I[a], y = NUM_I[b]; return D.comb[`${M
 function pintar(i1, i2, apt, ordI) {
   const al = Ruta.alumno();
   document.getElementById('reporte').classList.remove('oculto');
-  document.getElementById('rep-ficha').innerHTML = `<b>${Ruta.esc(al.nombre)}</b> · Grupo ${Ruta.esc(al.grupo)} · ${Ruta.esc(al.edad)} años · ${Ruta.esc(al.sexo)} · Orientador(a): ${Ruta.esc(al.docente)}<br><span class="sub">Fuente de los porcentajes: ${fuente} · ${Ruta.fecha()}</span>`;
+  document.getElementById('rep-ficha').innerHTML = `<b>${Ruta.esc(al.nombre)}</b>, grupo ${Ruta.esc(al.grupo)}, ${Ruta.esc(al.edad)} años, ${Ruta.esc(al.sexo)}, Orientador(a): ${Ruta.esc(al.docente)}<br><span class="sub">Fuente de los porcentajes: ${fuente}, ${Ruta.fecha()}</span>`;
   document.getElementById('firma-alumno').textContent = al.nombre;
   document.getElementById('firma-orient').textContent = 'Orientador(a): ' + al.docente;
-  const tarjetaCat = (k, nombres, descs, pcts, nivel, n) => `<div style="margin-bottom:12px"><b>${n}. ${nombres[k]} — ${pcts[k]} %</b> <span class="chip">${nivel(pcts[k])}</span><p class="sub" style="margin:4px 0 0;font-size:.9rem">${descs[k]}</p></div>`;
-  document.getElementById('rep-int').innerHTML = tarjetaCat(i1, NOMBRE_I, D.descInt, pctInt, Ruta.nivelInteres, '1°') + tarjetaCat(i2, NOMBRE_I, D.descInt, pctInt, Ruta.nivelInteres, '2°') +
+  const tarjetaCat = (k, nombres, descs, pcts, nivel, n) => `<div style="margin-bottom:12px"><b>${n} ${nombres[k]}: ${pcts[k]} %</b> <span class="chip">${nivel(pcts[k])}</span><p class="sub" style="margin:4px 0 0;font-size:.9rem">${descs[k]}</p></div>`;
+  document.getElementById('rep-int').innerHTML = tarjetaCat(i1, NOMBRE_I, D.descInt, pctInt, Ruta.nivelInteres, '1.º') + tarjetaCat(i2, NOMBRE_I, D.descInt, pctInt, Ruta.nivelInteres, '2.º') +
     (pctInt[i2] < 75 ? '<p class="sub" style="font-size:.85rem">El manual recomienda que los dos intereses estén de preferencia por encima del 75 %.</p>' : '');
-  document.getElementById('rep-apt').innerHTML = tarjetaCat(apt, NOMBRE_A, D.descApt, pctApt, Ruta.nivelAptitud, '1°');
+  document.getElementById('rep-apt').innerHTML = tarjetaCat(apt, NOMBRE_A, D.descApt, pctApt, Ruta.nivelAptitud, '1.º');
 
   // Cruce 1
   let lista = buscarComb(i1, i2), nota = '', usado = [i1, i2];

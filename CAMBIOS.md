@@ -44,6 +44,7 @@ Además:
 - **Por validar:** los paquetes de optativas de 6.º por área son una propuesta nueva. Se encuentran en `assets/datos.js` → `areas[].opt6`.
 
 ## General
-- Todo el sitio comparte un mismo diseño y una barra de pasos.
+- Nuevo diseño de sitio web, igual en todas las páginas: menú superior, línea de la ruta con las 5 estaciones (se llena conforme el alumno avanza) y pie de página.
+- Las fuentes vienen incluidas en el repositorio, así que no dependen de Google Fonts.
 - Ya no se usa Tailwind CDN ni Chart.js, para que las páginas no fallen si esos servicios cambian.
 - Se hicieron ajustes de accesibilidad: foco visible, botones accesibles con teclado y textos para lectores de pantalla.
