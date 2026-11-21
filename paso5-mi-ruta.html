@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paso 5 · Mi ruta vocacional</title>
+<link rel="stylesheet" href="assets/estilos.css">
+</head>
+<body>
+<main class="contenedor" id="app">
+  <section class="tarjeta">
+    <div class="solo-impresion" style="margin-bottom:8px"><strong>UAEMéx · Plantel "Dr. Ángel Ma. Garibay Kintana" · Departamento de Orientación Educativa</strong></div>
+    <span class="etiqueta">Paso 5 de 5</span>
+    <h1>Mi ruta vocacional</h1>
+    <p id="ficha" style="margin:0"></p>
+  </section>
+  <div id="pendientes"></div>
+
+  <section class="tarjeta" id="s-hm"></section>
+  <section class="tarjeta" id="s-interp"></section>
+  <section class="tarjeta" id="s-evapem"></section>
+  <section class="tarjeta" id="s-opt"></section>
+
+  <section class="tarjeta oro">
+    <h2>Mi reflexión</h2>
+    <p class="sub no-imprimir">Escribe con tus palabras qué descubriste. Se guarda en este navegador y aparece en tu reporte impreso.</p>
+    <div class="campo"><label for="ref1">¿Qué carrera(s) quiero investigar más y por qué?</label><textarea id="ref1" rows="3" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font:inherit"></textarea></div>
+    <div class="campo"><label for="ref2">¿Qué me sorprendió de mis resultados?</label><textarea id="ref2" rows="3" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font:inherit"></textarea></div>
+  </section>
+
+  <div class="aviso">Ningún resultado es un dictamen. Esta ruta es una guía para conversar con tu orientador(a); la decisión final es tuya.</div>
+  <div class="solo-impresion" style="margin-top:46px">
+    <div style="display:flex;gap:40px;text-align:center">
+      <div style="flex:1;border-top:1px solid #333;padding-top:6px" id="f-al"></div>
+      <div style="flex:1;border-top:1px solid #333;padding-top:6px" id="f-or"></div>
+    </div>
+  </div>
+  <div class="acciones">
+    <button class="btn" type="button" onclick="window.print()">Imprimir / Guardar mi ruta en PDF</button>
+    <a class="btn sec" href="index.html">Volver al inicio</a>
+  </div>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/ruta.js"></script>
+<script>
+Ruta.montarEncabezado(5);
+const D = window.DATOS, app = document.getElementById('app');
+if (Ruta.exigirAlumno(app)) armar();
+
+function armar() {
+  const al = Ruta.alumno(), e = Ruta.estado();
+  document.getElementById('ficha').innerHTML = `<b>${Ruta.esc(al.nombre)}</b>${al.cuenta ? ' · Cuenta ' + Ruta.esc(al.cuenta) : ''} · Grupo ${Ruta.esc(al.grupo)} · ${al.semestre}.º semestre · Orientador(a): ${Ruta.esc(al.docente)}<br><span class="sub">${Ruta.fecha()}</span>`;
+  document.getElementById('f-al').textContent = al.nombre;
+  document.getElementById('f-or').textContent = 'Orientador(a): ' + al.docente;
+
+  const falta = Ruta.PASOS.filter(p => p.clave && !Ruta.completo(p.clave));
+  document.getElementById('pendientes').innerHTML = falta.length
+    ? `<div class="aviso no-imprimir">Te falta completar: ${falta.map(p => `<a href="${p.archivo}">Paso ${p.n} · ${p.corto}</a>`).join(', ')}. Tu reporte mostrará solo lo que ya tengas.</div>` : '';
+
+  const NI = Object.fromEntries(D.catInt), NA = Object.fromEntries(D.catApt);
+  // 1
+  const hm = e.hm, ip = e.interp;
+  const pI = (hm && hm.completado) ? hm.pctInt : ip && ip.pctInt, pA = (hm && hm.completado) ? hm.pctApt : ip && ip.pctApt;
+  document.getElementById('s-hm').innerHTML = pI
+    ? `<span class="etiqueta">Paso 1 · Herrera y Montes</span><h2>Mis intereses y aptitudes</h2><div class="rejilla dos">
+        <div><h3>Intereses</h3>${Ruta.barras(D.catInt.map(([k, n]) => ({ clave: k, nombre: n, valor: pI[k] })), { resaltar: ip && ip.completado ? [ip.int1, ip.int2] : [] })}</div>
+        <div><h3>Aptitudes</h3>${Ruta.barras(D.catApt.map(([k, n]) => ({ clave: k, nombre: n, valor: pA[k] })), { resaltar: ip && ip.completado ? [ip.apt] : [], clase: 'apt' })}</div></div>`
+    : `<h2>Paso 1 · Herrera y Montes</h2><p class="sub">Pendiente.</p>`;
+  // 2
+  document.getElementById('s-interp').innerHTML = ip && ip.completado
+    ? `<span class="etiqueta">Paso 2 · Interpretación</span><h2>${NI[ip.int1]} + ${NI[ip.int2]} · Aptitud: ${NA[ip.apt]}</h2>
+       ${ip.alternativa ? `<p class="sub">Se usó la combinación más cercana disponible: ${NI[ip.combUsada[0]]} + ${NI[ip.combUsada[1]]}.</p>` : ''}
+       ${ip.coinciden.length ? `<h3>Coinciden gusto y capacidad</h3><div class="chips" style="margin-bottom:10px">${ip.coinciden.map(c => `<span class="chip marcada">${c}</span>`).join('')}</div>` : ''}
+       <h3>Por mis intereses</h3><div class="chips" style="margin-bottom:10px">${ip.carrerasInt.map(c => `<span class="chip">${c}</span>`).join('')}</div>
+       <h3>Por mi aptitud</h3><div class="chips">${ip.carrerasApt.map(c => `<span class="chip">${c}</span>`).join('')}</div>`
+    : `<h2>Paso 2 · Interpretación</h2><p class="sub">Pendiente.</p>`;
+  // 3
+  const ev = e.evapem;
+  document.getElementById('s-evapem').innerHTML = ev && ev.completado
+    ? `<span class="etiqueta">Paso 3 · EVAPEM IV</span><h2>Áreas y carreras más afines</h2><div class="rejilla dos">
+        <div><h3>Por área</h3>${Ruta.barras(ev.areas, { resaltar: [ev.areas[0].clave] })}</div>
+        <div><h3>Top 10</h3><ol style="margin:0;padding-left:20px">${ev.top.slice(0, 10).map(c => `<li>${Ruta.esc(c.n)} — <b>${c.afin}%</b></li>`).join('')}</ol></div></div>`
+    : `<h2>Paso 3 · EVAPEM</h2><p class="sub">Pendiente.</p>`;
+  // 4
+  const op = e.optativas;
+  const tit = id => (D.areas.find(a => a.id === id) || {}).titulo;
+  document.getElementById('s-opt').innerHTML = op && (op.elegidas || []).length
+    ? `<span class="etiqueta">Paso 4 · Optativas de ${op.catalogo}.º semestre</span><h2>Mis optativas</h2><div class="chips" style="margin-bottom:10px">${op.elegidas.map(o => `<span class="chip marcada">${o}</span>`).join('')}</div>
+       ${op.sugeridas && op.sugeridas.length ? `<p class="sub" style="margin:0">Áreas sugeridas por mis resultados: ${op.sugeridas.map(tit).join(' · ')}</p>` : ''}`
+    : `<h2>Paso 4 · Optativas</h2><p class="sub">Pendiente.</p>`;
+
+  const r = e.reflexion || {};
+  ['ref1', 'ref2'].forEach(id => { const t = document.getElementById(id); t.value = r[id] || ''; t.addEventListener('input', () => { const x = Ruta.obtener('reflexion') || {}; x[id] = t.value; Ruta.guardar('reflexion', x); }); });
+}
+</script>
+</body>
+</html>

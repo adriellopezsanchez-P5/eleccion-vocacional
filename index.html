@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruta Vocacional · Plantel "Dr. Ángel Ma. Garibay Kintana" · UAEMéx</title>
+<link rel="stylesheet" href="assets/estilos.css">
+</head>
+<body>
+<main class="contenedor">
+  <section class="tarjeta">
+    <span class="etiqueta">Orientación Educativa</span>
+    <h1>Tu ruta vocacional, paso a paso</h1>
+    <p class="sub">Cinco pasos conectados: lo que respondes en cada uno alimenta al siguiente. Al final obtienes un solo reporte con tus intereses, aptitudes, carreras afines y las optativas que te conviene cursar.</p>
+    <div class="aviso">Ningún resultado es un dictamen. Esta ruta es una guía para reflexionar con tu orientador(a); la decisión final es tuya.</div>
+  </section>
+
+  <section class="tarjeta" id="ficha">
+    <h2>1. Tus datos</h2>
+    <p class="sub">Se capturan una sola vez y aparecen en todos tus reportes.</p>
+    <form id="form-alumno" novalidate>
+      <div class="rejilla dos">
+        <div class="campo"><label for="nombre">Nombre completo *</label><input id="nombre" required autocomplete="name"></div>
+        <div class="campo"><label for="cuenta">Número de cuenta</label><input id="cuenta" inputmode="numeric" pattern="[0-9]{7,8}" placeholder="7 u 8 dígitos"></div>
+        <div class="campo"><label for="grupo">Grupo *</label><input id="grupo" required></div>
+        <div class="campo"><label for="semestre">Semestre que cursas *</label>
+          <select id="semestre" required>
+            <option value="">Selecciona…</option>
+            <option value="4">4.º semestre (eliges optativas de 5.º)</option>
+            <option value="5">5.º semestre (eliges optativas de 6.º)</option>
+            <option value="6">6.º semestre</option>
+          </select></div>
+        <div class="campo"><label for="docente">Docente / Orientador(a) *</label><input id="docente" required></div>
+        <div class="campo"><label for="edad">Edad *</label><input id="edad" type="number" min="12" max="25" required></div>
+        <div class="campo"><label for="sexo">Sexo *</label>
+          <select id="sexo" required><option value="">Selecciona…</option><option>Femenino</option><option>Masculino</option><option>Prefiero no decir</option></select></div>
+      </div>
+      <div id="error-ficha" class="aviso alerta oculto" role="alert"></div>
+      <div class="acciones"><button class="btn" type="submit">Guardar mis datos</button></div>
+    </form>
+  </section>
+
+  <section class="tarjeta">
+    <h2>2. Tu recorrido</h2>
+    <div class="ruta-mapa" id="mapa"></div>
+    <div class="acciones">
+      <a class="btn" id="btn-continuar" href="paso1-herrera-montes.html">Comenzar</a>
+      <button class="btn sec" type="button" id="btn-borrar">Borrar mis datos de este equipo</button>
+    </div>
+    <p class="sub" style="margin-top:12px;font-size:.88rem">Si usas una computadora compartida, imprime tu reporte final y después borra tus datos.</p>
+  </section>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/ruta.js"></script>
+<script>
+Ruta.montarEncabezado(0);
+const campos = ['nombre','cuenta','grupo','semestre','docente','edad','sexo'];
+const a = Ruta.alumno();
+if (a) campos.forEach(c => { document.getElementById(c).value = a[c] || ''; });
+
+document.getElementById('form-alumno').addEventListener('submit', e => {
+  e.preventDefault();
+  const datos = {}; campos.forEach(c => datos[c] = document.getElementById(c).value.trim());
+  const faltan = ['nombre','grupo','semestre','docente','edad','sexo'].filter(c => !datos[c]);
+  const err = document.getElementById('error-ficha');
+  if (faltan.length || (datos.cuenta && !/^\d{7,8}$/.test(datos.cuenta))) {
+    err.textContent = faltan.length ? 'Completa los campos marcados con *.' : 'El número de cuenta debe tener 7 u 8 dígitos, sin espacios.';
+    err.classList.remove('oculto'); return;
+  }
+  err.classList.add('oculto');
+  Ruta.guardar('alumno', datos);
+  location.href = siguientePaso();
+});
+
+document.getElementById('btn-borrar').addEventListener('click', () => {
+  if (confirm('Se borrarán tus datos y resultados guardados en este navegador. ¿Continuar?')) { Ruta.borrarTodo(); location.reload(); }
+});
+
+const DESCR = {
+  1: 'Cuestionario de 120 preguntas: 60 de intereses y 60 de aptitudes. Puedes pausarlo y continuar después.',
+  2: 'Tus dos intereses más altos y tu aptitud dominante se cruzan con las tablas institucionales de opciones educativas.',
+  3: 'Registra los 10 rasgos más altos de tu gráfica EVAPEM y compara tu perfil con 80 opciones educativas.',
+  4: 'Con tus resultados, la ruta te señala las áreas de conocimiento y las optativas que más te convienen.',
+  5: 'Un solo reporte con todo tu proceso, listo para imprimir o guardar en PDF.'
+};
+function siguientePaso() {
+  for (const p of Ruta.PASOS) if (p.clave && !Ruta.completo(p.clave)) return p.archivo;
+  return 'paso5-mi-ruta.html';
+}
+document.getElementById('mapa').innerHTML = Ruta.PASOS.filter(p => p.n > 0).map(p => {
+  const ok = p.clave ? Ruta.completo(p.clave) : false;
+  return `<a href="${p.archivo}"><span class="n">PASO ${p.n}</span><h3>${p.corto}</h3><p class="sub" style="font-size:.86rem;margin:0">${DESCR[p.n]}</p>
+    ${p.clave ? `<span class="estado ${ok ? 'ok' : ''}">${ok ? 'Completado' : 'Pendiente'}</span>` : ''}</a>`;
+}).join('');
+const btn = document.getElementById('btn-continuar');
+if (!a) { btn.href = '#ficha'; btn.textContent = 'Primero registra tus datos'; }
+else { btn.href = siguientePaso(); btn.textContent = Ruta.completo('hm') ? 'Continuar donde me quedé' : 'Comenzar paso 1'; }
+</script>
+</body>
+</html>

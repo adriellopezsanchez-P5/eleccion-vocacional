@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paso 1 · Cuestionario de Intereses y Aptitudes (Herrera y Montes)</title>
+<link rel="stylesheet" href="assets/estilos.css">
+</head>
+<body>
+<main class="contenedor" id="app">
+
+  <!-- Instrucciones -->
+  <section id="v-inicio" class="tarjeta">
+    <span class="etiqueta">Paso 1 de 5</span>
+    <h1>Cuestionario de Intereses y Aptitudes</h1>
+    <p class="sub">Modelo de Luis Herrera y Montes, versión actualizada para estudiantes de bachillerato.</p>
+    <div class="rejilla dos" style="margin-top:14px">
+      <div class="tarjeta suave" style="margin:0">
+        <h3>Sección 1 · Intereses (60 preguntas)</h3>
+        <p>Pregúntate: <b>¿Qué tanto me gustaría hacer esto?</b></p>
+        <p class="sub" style="margin:0">4 Me gusta mucho · 3 Me gusta algo · 2 Me es indiferente · 1 Me desagrada algo · 0 Me desagrada mucho</p>
+      </div>
+      <div class="tarjeta oro" style="margin:0">
+        <h3>Sección 2 · Aptitudes (60 preguntas)</h3>
+        <p>Pregúntate: <b>¿Qué tan apto(a) me considero para esto?</b>, aunque no te guste.</p>
+        <p class="sub" style="margin:0">4 Muy competente · 3 Competente · 2 Medianamente · 1 Muy poco · 0 Incompetente</p>
+      </div>
+    </div>
+    <div class="aviso info" style="margin-top:14px">Tus respuestas se guardan en cuanto las marcas. Si cierras la página, podrás continuar donde te quedaste. También puedes contestar con el teclado: teclas <b>0</b> a <b>4</b>, y flechas ← → para moverte.</div>
+    <div class="acciones">
+      <button class="btn" id="btn-comenzar" type="button">Comenzar</button>
+      <button class="btn sec oculto" id="btn-reiniciar" type="button">Volver a empezar desde cero</button>
+    </div>
+  </section>
+
+  <!-- Cuestionario -->
+  <section id="v-test" class="tarjeta oculto" aria-live="polite">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+      <h2 id="t-seccion" style="margin:0">Intereses</h2>
+      <span class="sub" id="t-contador">1 / 60</span>
+    </div>
+    <p class="sub" id="t-pregunta-guia" style="margin:4px 0 0">¿Qué tanto te gustaría…?</p>
+    <div class="progreso" aria-hidden="true"><div id="t-barra" style="width:0"></div></div>
+    <p class="pregunta"><span id="t-num">1.</span> <span id="t-texto"></span></p>
+    <fieldset style="border:0;padding:0;margin:0">
+      <legend class="sr">Elige una opción</legend>
+      <div class="opciones" id="t-opciones"></div>
+    </fieldset>
+    <div class="acciones" style="justify-content:space-between">
+      <button class="btn sec" id="btn-ant" type="button">← Anterior</button>
+      <span class="sub" id="t-faltan" style="align-self:center;font-size:.86rem"></span>
+      <button class="btn sec" id="btn-sig" type="button">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- Transición -->
+  <section id="v-transicion" class="tarjeta oculto">
+    <span class="etiqueta">Sección 1 completada</span>
+    <h2>¡Terminaste la sección de Intereses!</h2>
+    <p>Ahora contestarás la sección de <b>Aptitudes</b>. Recuerda: no se trata de si te gusta la actividad, sino de qué tan capaz te consideras para aprenderla o realizarla.</p>
+    <div class="acciones"><button class="btn sec" id="btn-volver-int" type="button">Revisar intereses</button><button class="btn" id="btn-ir-apt" type="button">Comenzar aptitudes</button></div>
+  </section>
+
+  <!-- Resultados -->
+  <section id="v-resultados" class="oculto">
+    <div class="tarjeta">
+      <span class="etiqueta">Resultados del paso 1</span>
+      <h1>Tu perfil de intereses y aptitudes</h1>
+      <p class="sub" id="r-ficha"></p>
+      <div class="aviso">Las líneas verticales de cada barra marcan el 50 % y el 75 %. Según el manual, de 75 % a 100 % son <b>intereses profesionales</b> y <b>aptitudes desarrolladas</b>.</div>
+    </div>
+    <div class="rejilla dos">
+      <div class="tarjeta"><h2>Perfil de intereses</h2><div id="r-int"></div></div>
+      <div class="tarjeta"><h2>Perfil de aptitudes</h2><div id="r-apt"></div></div>
+    </div>
+    <div class="tarjeta" id="r-perfil-bajo"></div>
+    <div class="acciones no-imprimir">
+      <a class="btn" href="paso2-interpretacion.html">Continuar al paso 2: Interpretación →</a>
+      <button class="btn sec" type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+      <button class="btn sec" type="button" id="btn-revisar">Revisar mis respuestas</button>
+    </div>
+  </section>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/ruta.js"></script>
+<script>
+Ruta.montarEncabezado(1);
+const D = window.DATOS;
+const ESCALAS = {
+  int: [[4,'Me gusta mucho'],[3,'Me gusta algo o en parte'],[2,'Me es indiferente'],[1,'Me desagrada algo'],[0,'Me desagrada mucho']],
+  apt: [[4,'Muy competente'],[3,'Competente'],[2,'Medianamente competente'],[1,'Muy poco competente'],[0,'Incompetente']]
+};
+const app = document.getElementById('app');
+const vistas = ['v-inicio','v-test','v-transicion','v-resultados'];
+function ver(id) { vistas.forEach(v => document.getElementById(v).classList.toggle('oculto', v !== id)); window.scrollTo(0, 0); }
+
+let st = Ruta.obtener('hm') || {};
+st.respInt = st.respInt || Array(60).fill(null);
+st.respApt = st.respApt || Array(60).fill(null);
+let seccion = st.seccion || 'int';
+let idx = st.idx || 0;
+
+function guardarAvance() { st.seccion = seccion; st.idx = idx; Ruta.guardar('hm', st); }
+const resp = () => seccion === 'int' ? st.respInt : st.respApt;
+
+if (Ruta.exigirAlumno(app)) iniciar();
+
+function iniciar() {
+  const empezado = st.respInt.some(v => v !== null);
+  if (st.completado) { mostrarResultados(); return; }
+  if (empezado) {
+    document.getElementById('btn-comenzar').textContent = 'Continuar donde me quedé';
+    document.getElementById('btn-reiniciar').classList.remove('oculto');
+  }
+}
+
+document.getElementById('btn-comenzar').onclick = () => { ver('v-test'); cargar(); };
+document.getElementById('btn-reiniciar').onclick = () => {
+  if (!confirm('Se borrarán tus 120 respuestas. ¿Continuar?')) return;
+  st = { respInt: Array(60).fill(null), respApt: Array(60).fill(null) }; seccion = 'int'; idx = 0; guardarAvance(); ver('v-test'); cargar();
+};
+document.getElementById('btn-ir-apt').onclick = () => { seccion = 'apt'; idx = 0; guardarAvance(); ver('v-test'); cargar(); };
+document.getElementById('btn-volver-int').onclick = () => { seccion = 'int'; idx = 59; ver('v-test'); cargar(); };
+document.getElementById('btn-revisar').onclick = () => { seccion = 'int'; idx = 0; ver('v-test'); cargar(); };
+
+function cargar() {
+  const esInt = seccion === 'int';
+  const banco = esInt ? D.preguntasInt : D.preguntasApt;
+  document.getElementById('t-seccion').textContent = esInt ? 'Sección 1 · Intereses' : 'Sección 2 · Aptitudes';
+  document.getElementById('t-pregunta-guia').textContent = esInt ? (idx >= 50 ? '¿Qué tanto te gustaría trabajar como…?' : '¿Qué tanto te gustaría…?') : '¿Qué tan apto(a) te consideras para…?';
+  document.getElementById('t-contador').textContent = `${idx + 1} / 60`;
+  const hechas = st.respInt.filter(v => v !== null).length + st.respApt.filter(v => v !== null).length;
+  document.getElementById('t-barra').style.width = (hechas / 120 * 100) + '%';
+  document.getElementById('t-num').textContent = (idx + 1) + '.';
+  document.getElementById('t-texto').textContent = banco[idx];
+  const r = resp();
+  document.getElementById('t-opciones').innerHTML = ESCALAS[seccion].map(([v, t]) => `
+    <input type="radio" name="op" id="op${v}" value="${v}" ${r[idx] === v ? 'checked' : ''}>
+    <label for="op${v}"><b>${v}</b><span>${t}</span></label>`).join('');
+  document.querySelectorAll('#t-opciones input').forEach(inp => inp.addEventListener('change', () => responder(+inp.value)));
+  const faltan = r.filter(v => v === null).length;
+  document.getElementById('t-faltan').textContent = faltan ? `Te faltan ${faltan} en esta sección` : 'Sección completa';
+  document.getElementById('btn-ant').disabled = (seccion === 'int' && idx === 0);
+  document.getElementById('btn-sig').textContent = idx === 59 ? (seccion === 'int' ? 'Ir a Aptitudes →' : 'Ver resultados →') : 'Siguiente →';
+}
+
+let temporizador = null;
+function responder(v) {
+  resp()[idx] = v; guardarAvance();
+  if (st.completado) calcular(); // revisión: mantener resultados al día
+  clearTimeout(temporizador);
+  temporizador = setTimeout(avanzar, 220);
+}
+function avanzar() {
+  if (idx < 59) { idx++; guardarAvance(); cargar(); return; }
+  const r = resp(); const pend = r.findIndex(v => v === null);
+  if (pend !== -1) { idx = pend; cargar(); document.getElementById('t-faltan').textContent = 'Aún falta esta pregunta por contestar.'; return; }
+  if (seccion === 'int') { ver('v-transicion'); return; }
+  const pendInt = st.respInt.findIndex(v => v === null);
+  if (pendInt !== -1) { seccion = 'int'; idx = pendInt; cargar(); return; }
+  calcular(); mostrarResultados();
+}
+function retroceder() {
+  if (idx > 0) idx--; else if (seccion === 'apt') { seccion = 'int'; idx = 59; }
+  guardarAvance(); cargar();
+}
+document.getElementById('btn-sig').onclick = avanzar;
+document.getElementById('btn-ant').onclick = retroceder;
+document.addEventListener('keydown', e => {
+  if (document.getElementById('v-test').classList.contains('oculto')) return;
+  if (/^[0-4]$/.test(e.key)) { const inp = document.getElementById('op' + e.key); inp.checked = true; responder(+e.key); }
+  else if (e.key === 'ArrowRight' && resp()[idx] !== null) avanzar();
+  else if (e.key === 'ArrowLeft') retroceder();
+});
+
+/* Calificación según la hoja de respuestas del manual:
+   la columna de cada pregunta es (número - 1) mod 10; se suman 6 preguntas (máx. 24) y se convierte con la tabla de porcentajes. */
+function puntuar(respuestas, cats) {
+  const sumas = Array(10).fill(0);
+  respuestas.forEach((v, i) => sumas[i % 10] += (v || 0));
+  const pct = {}, suma = {};
+  cats.forEach(([k], c) => { suma[k] = sumas[c]; pct[k] = D.tablaPct[sumas[c]]; });
+  return { suma, pct };
+}
+function calcular() {
+  const i = puntuar(st.respInt, D.catInt), a = puntuar(st.respApt, D.catApt);
+  Object.assign(st, { sumInt: i.suma, pctInt: i.pct, sumApt: a.suma, pctApt: a.pct, completado: new Date().toISOString(), fuente: 'cuestionario en línea' });
+  delete st.seccion; delete st.idx;
+  Ruta.guardar('hm', st);
+  // Si el alumno rehace el test, su interpretación anterior deja de ser válida.
+  const ip = Ruta.obtener('interp'); if (ip) { ip.completado = null; Ruta.guardar('interp', ip); }
+}
+
+function mostrarResultados() {
+  ver('v-resultados');
+  const al = Ruta.alumno();
+  document.getElementById('r-ficha').textContent = `${al.nombre} · Grupo ${al.grupo} · ${Ruta.fecha(st.completado)}`;
+  const oi = Ruta.ordenar(st.pctInt, D.catInt), oa = Ruta.ordenar(st.pctApt, D.catApt);
+  const topI = oi.slice(0, 2).map(x => x.clave), topA = [oa[0].clave];
+  document.getElementById('r-int').innerHTML = Ruta.barras(D.catInt.map(([k, n]) => ({ clave: k, nombre: n, valor: st.pctInt[k] })), { resaltar: topI }) +
+    `<p class="sub" style="margin-top:10px;font-size:.88rem">Más altos: <b>${oi.slice(0, 4).map(x => `${x.nombre} (${x.valor}%)`).join(', ')}</b></p>`;
+  document.getElementById('r-apt').innerHTML = Ruta.barras(D.catApt.map(([k, n]) => ({ clave: k, nombre: n, valor: st.pctApt[k] })), { resaltar: topA, clase: 'apt' }) +
+    `<p class="sub" style="margin-top:10px;font-size:.88rem">Más altas: <b>${oa.slice(0, 4).map(x => `${x.nombre} (${x.valor}%)`).join(', ')}</b></p>`;
+  const caja = document.getElementById('r-perfil-bajo');
+  const maxA = oa[0].valor, maxI = oi[0].valor;
+  const notas = [];
+  if (maxI < 75) notas.push('Ninguno de tus intereses llegó al 75 %. El manual sugiere tomar de todos modos los dos más altos, y comentarlo con tu orientador(a).');
+  if (maxA < 50) notas.push('Tu perfil de aptitudes salió bajo. El manual explica que a veces nos subestimamos o nos comparamos con otros; en ese caso, interpreta tu perfil a partir de la columna más alta.');
+  caja.innerHTML = notas.length ? '<h3>Para tomar en cuenta</h3>' + notas.map(n => `<p>${n}</p>`).join('') : '';
+  caja.classList.toggle('oculto', !notas.length);
+}
+</script>
+</body>
+</html>

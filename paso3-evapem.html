@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paso 3 · Perfil vocacional EVAPEM IV</title>
+<link rel="stylesheet" href="assets/estilos.css">
+</head>
+<body>
+<main class="contenedor" id="app">
+  <section class="tarjeta no-imprimir">
+    <span class="etiqueta">Paso 3 de 5</span>
+    <h1>Perfil vocacional EVAPEM IV</h1>
+    <p class="sub">Compara los rasgos más altos de tu gráfica EVAPEM con el perfil de ingreso de 80 opciones educativas.</p>
+    <ol style="padding-left:20px;margin:10px 0">
+      <li>Abre tu gráfica de resultados de EVAPEM.</li>
+      <li>Marca los <b>10 rasgos con puntaje más alto</b> (escala "Superior").</li>
+      <li>Si no completas 10 en "Superior", completa con los más altos de tu escala "Altos".</li>
+    </ol>
+  </section>
+
+  <section class="tarjeta no-imprimir">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">Tus 10 rasgos</h2>
+      <span class="chip" id="contador" aria-live="polite">0 / 10</span>
+    </div>
+    <h3 style="margin-top:14px">Intereses (1–10)</h3><div class="rasgos" id="g1"></div>
+    <h3 style="margin-top:14px">Aptitudes (11–21)</h3><div class="rasgos" id="g2"></div>
+    <h3 style="margin-top:14px">Habilidades (22–38)</h3><div class="rasgos" id="g3"></div>
+    <div class="acciones"><button class="btn sec" type="button" id="btn-limpiar">Limpiar selección</button></div>
+  </section>
+
+  <section id="resultados">
+    <div class="tarjeta solo-impresion"><strong>UAEMéx · Plantel "Dr. Ángel Ma. Garibay Kintana" · Departamento de Orientación Educativa</strong><br>Informe de Perfil Vocacional · EVAPEM IV</div>
+    <div class="tarjeta solo-impresion"><p id="ficha-imp" style="margin:0"></p></div>
+    <div id="aviso-incompleto" class="aviso info no-imprimir">Marca exactamente 10 rasgos para ver tus resultados.</div>
+    <div id="bloque-res" class="oculto">
+      <div class="tarjeta">
+        <span class="etiqueta">1 · Lo más importante</span>
+        <h2>Afinidad por área de conocimiento</h2>
+        <p class="sub">Promedio de tu afinidad con las carreras de cada área. Un área alta es una buena señal aunque una carrera concreta no aparezca en tu top 10.</p>
+        <div id="areas"></div>
+      </div>
+      <div class="tarjeta">
+        <span class="etiqueta">2 · Ranking</span>
+        <h2>Top 15 de compatibilidad</h2>
+        <div style="overflow-x:auto"><table id="tabla-top"></table></div>
+        <details class="no-imprimir" style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">Ver las 80 opciones</summary><div style="overflow-x:auto"><table id="tabla-todas"></table></div></details>
+      </div>
+      <div class="tarjeta suave">
+        <h3>¿Cómo se calcula la afinidad?</h3>
+        <p style="font-size:.92rem">Cada carrera requiere entre 13 y 33 rasgos, pero tú marcas 10. Para que todas las carreras se midan con la misma regla, la afinidad es: <b>rasgos tuyos que la carrera requiere ÷ el máximo que podrías cubrir</b> (10, o menos si la carrera pide menos de 10). Así, una ingeniería que pide 33 rasgos puede llegar al 100 % igual que Historia, que pide 13.</p>
+        <p style="font-size:.92rem;margin:0"><b>"Gusto" y "Habilidad"</b> muestran qué parte de los rasgos de interés (1–10) y de aptitud (11–21) que pide la carrera cubriste. Las carreras marcadas con el mismo símbolo ◆ tienen exactamente el mismo perfil en EVAPEM, por eso empatan.</p>
+      </div>
+      <div class="aviso">Este análisis es una herramienta de apoyo para tu decisión y no debe tomarse como absoluto. Compleméntalo con tu reflexión personal y la guía de tu orientador(a).</div>
+      <div class="acciones no-imprimir">
+        <a class="btn" href="paso4-optativas.html">Continuar al paso 4: Optativas →</a>
+        <button class="btn sec" type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/ruta.js"></script>
+<script>
+Ruta.montarEncabezado(3);
+const D = window.DATOS;
+const AREAS = { SOC: 'Sociales, Administración y Derecho', ING: 'Ingeniería, Manufactura y Construcción', SAL: 'Ciencias de la Salud', NAT: 'Ciencias Naturales, Exactas y Computación', AGR: 'Agronomía y Veterinaria', EDU: 'Educación y Humanidades', ART: 'Artes y Diseño' };
+const app = document.getElementById('app');
+const MAX = 10;
+let sel = new Set((Ruta.obtener('evapem') || {}).rasgos || []);
+
+// Carreras con perfil idéntico (mismos rasgos requeridos)
+const grupos = {}; D.evapem.forEach(c => { const k = c.r.join(','); (grupos[k] = grupos[k] || []).push(c.n); });
+const simbolo = {}; let g = 0; Object.values(grupos).filter(v => v.length > 1).forEach(v => { g++; v.forEach(n => simbolo[n] = g); });
+
+if (Ruta.exigirAlumno(app)) {
+  [['g1', 1, 10], ['g2', 11, 21], ['g3', 22, 38]].forEach(([id, a, b]) => {
+    const cont = document.getElementById(id);
+    for (let i = a; i <= b; i++) {
+      const bt = document.createElement('button');
+      bt.type = 'button'; bt.textContent = i; bt.dataset.n = i; bt.setAttribute('aria-label', 'Rasgo ' + i);
+      bt.onclick = () => { sel.has(i) ? sel.delete(i) : sel.size < MAX && sel.add(i); actualizar(); };
+      cont.appendChild(bt);
+    }
+  });
+  document.getElementById('btn-limpiar').onclick = () => { sel.clear(); actualizar(); };
+  actualizar();
+}
+
+function actualizar() {
+  document.querySelectorAll('.rasgos button').forEach(b => {
+    const on = sel.has(+b.dataset.n);
+    b.setAttribute('aria-pressed', on); b.disabled = !on && sel.size >= MAX;
+  });
+  document.getElementById('contador').textContent = `${sel.size} / ${MAX}`;
+  const listo = sel.size === MAX;
+  document.getElementById('aviso-incompleto').classList.toggle('oculto', listo);
+  document.getElementById('aviso-incompleto').textContent = sel.size > 0 ? `Llevas ${sel.size} rasgos; marca ${MAX - sel.size} más para ver tus resultados.` : 'Marca exactamente 10 rasgos para ver tus resultados.';
+  document.getElementById('bloque-res').classList.toggle('oculto', !listo);
+  if (!listo) { Ruta.guardar('evapem', { rasgos: [...sel], completado: null }); return; }
+  calcular();
+}
+
+function calcular() {
+  const res = D.evapem.map(c => {
+    const m = c.r.filter(r => sel.has(r));
+    const reqI = c.r.filter(r => r <= 10), reqA = c.r.filter(r => r >= 11 && r <= 21);
+    return { n: c.n, a: c.a, req: c.r.length, m: m.length,
+      afin: Math.round(m.length / Math.min(MAX, c.r.length) * 1000) / 10,
+      gusto: reqI.length ? Math.round(m.filter(r => r <= 10).length / reqI.length * 100) : 0,
+      habil: reqA.length ? Math.round(m.filter(r => r >= 11 && r <= 21).length / reqA.length * 100) : 0 };
+  }).sort((x, y) => y.afin - x.afin || y.m - x.m || x.n.localeCompare(y.n, 'es'));
+
+  const porArea = {}; res.forEach(r => (porArea[r.a] = porArea[r.a] || []).push(r.afin));
+  const areas = Object.keys(AREAS).map(k => ({ clave: k, nombre: AREAS[k], valor: Math.round(porArea[k].reduce((s, v) => s + v, 0) / porArea[k].length) }))
+    .sort((a, b) => b.valor - a.valor);
+  document.getElementById('areas').innerHTML = Ruta.barras(areas, { resaltar: [areas[0].clave] });
+
+  const fila = (r, i) => `<tr><td class="num">${i + 1}</td><td>${Ruta.esc(r.n)} ${simbolo[r.n] ? `<span title="Mismo perfil EVAPEM que otras carreras" style="color:var(--oro)">◆${simbolo[r.n]}</span>` : ''}<br><span class="sub" style="font-size:.78rem">${AREAS[r.a]}</span></td>
+    <td class="num">${r.gusto}%</td><td class="num">${r.habil}%</td><td class="num">${r.m} / ${Math.min(MAX, r.req)}</td><td class="num"><b>${r.afin}%</b></td></tr>`;
+  const cab = '<thead><tr><th class="num">#</th><th>Opción educativa</th><th class="num">Gusto</th><th class="num">Habilidad</th><th class="num">Rasgos</th><th class="num">Afinidad</th></tr></thead>';
+  document.getElementById('tabla-top').innerHTML = cab + '<tbody>' + res.slice(0, 15).map(fila).join('') + '</tbody>';
+  document.getElementById('tabla-todas').innerHTML = cab + '<tbody>' + res.map(fila).join('') + '</tbody>';
+  const al = Ruta.alumno();
+  document.getElementById('ficha-imp').innerHTML = `<b>${Ruta.esc(al.nombre)}</b> · Grupo ${Ruta.esc(al.grupo)} · Orientador(a): ${Ruta.esc(al.docente)} · ${Ruta.fecha()}<br>Rasgos marcados: ${[...sel].sort((a, b) => a - b).join(', ')}`;
+  Ruta.guardar('evapem', { rasgos: [...sel], top: res.slice(0, 15).map(({ n, a, afin, m, req }) => ({ n, a, afin, m, req })), areas, completado: new Date().toISOString() });
+}
+</script>
+</body>
+</html>

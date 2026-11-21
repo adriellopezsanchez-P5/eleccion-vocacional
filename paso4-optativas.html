@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paso 4 · Explorador de optativas y carreras</title>
+<link rel="stylesheet" href="assets/estilos.css">
+</head>
+<body>
+<main class="contenedor" id="app">
+  <section class="tarjeta">
+    <span class="etiqueta">Paso 4 de 5</span>
+    <h1>Explorador de optativas y carreras</h1>
+    <p class="sub">Las optativas son tu primer acercamiento a las exigencias de la universidad. Aquí ves qué optativas conviene cursar según el área de la carrera que te interesa.</p>
+    <div class="pestanas" role="tablist" aria-label="Catálogo de optativas">
+      <button type="button" role="tab" id="tab-6" data-cat="6">Optativas de 6.º semestre</button>
+      <button type="button" role="tab" id="tab-5" data-cat="5">Optativas de 5.º semestre</button>
+    </div>
+    <p class="sub" id="nota-cat" style="font-size:.88rem;margin:0"></p>
+  </section>
+
+  <section class="tarjeta" id="sugerencia"></section>
+
+  <section class="tarjeta">
+    <h2>Catálogo: ¿de qué trata cada optativa?</h2>
+    <div class="rejilla tres" id="catalogo"></div>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Explorador por áreas</h2>
+    <div class="campo" style="max-width:460px">
+      <label for="buscar">Busca una carrera</label>
+      <input id="buscar" type="search" placeholder="Ej. Medicina, Derecho, Software…" autocomplete="off">
+    </div>
+    <p class="sub oculto" id="sin-resultado" aria-live="polite"></p>
+    <div id="areas"></div>
+  </section>
+
+  <section class="tarjeta oro">
+    <h2>Mis dos optativas</h2>
+    <p class="sub">Marca en el catálogo las dos que piensas elegir. Quedarán en tu reporte final. <b>La elección oficial se hace en el formulario de tu grupo.</b></p>
+    <div id="mis-opt" class="chips"></div>
+    <div class="acciones"><a class="btn" href="paso5-mi-ruta.html" id="btn-final">Ver mi ruta completa →</a></div>
+  </section>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/ruta.js"></script>
+<script>
+Ruta.montarEncabezado(4);
+const D = window.DATOS;
+const app = document.getElementById('app');
+const guardado = Ruta.obtener('optativas') || {};
+const al = Ruta.alumno();
+let cat = guardado.catalogo || (al && al.semestre === '4' ? '5' : '6');
+let elegidas = guardado.elegidas && guardado.catalogo === cat ? guardado.elegidas : [];
+
+/* Normaliza nombres para comparar carreras entre instrumentos (EVAPEM usa "Ingeniero en…", el manual "Ingeniería en…") */
+function clave(t) {
+  let s = Ruta.norm(t);
+  const eq = [[/^ingeniero /, 'ingenieria '], [/^ing\.? /, 'ingenieria '], [/^quimico farmaceutico biologo$/, 'quimica farmaceutica biologa'], [/^quimico en alimentos$/, 'quimica en alimentos'], [/^quimico$/, 'quimica'],
+    [/^medico cirujano$/, 'medicina'], [/^cirujano dentista$/, 'odontologia'], [/^medico veterinario zootecnista$/, 'medicina veterinaria y zootecnia'], [/^ingenieria en mecatronica$/, 'ingenieria mecatronica'],
+    [/^ingenieria electronica$/, 'ingenieria en electronica'], [/^ingenieria en transportes$/, 'ingenieria en transporte'], [/ sustentables?$/, ' sustentables'], [/^negocios internacionales bilingues?$/, 'negocios internacionales'], [/^cultura fisica y deporte$/, 'educacion fisica y deporte']];
+  eq.forEach(([re, r]) => s = s.replace(re, r));
+  return s;
+}
+function mismas(a, b) { const x = clave(a), y = clave(b); return x === y || (x.length > 6 && y.length > 6 && (x.includes(y) || y.includes(x))); }
+
+// Carreras que salieron en los pasos 2 y 3
+const ip = Ruta.obtener('interp'), ev = Ruta.obtener('evapem');
+const mias = [];
+if (ip && ip.completado) mias.push(...ip.carrerasInt.map(n => ({ n, f: 'Herrera y Montes (intereses)' })), ...ip.carrerasApt.map(n => ({ n, f: 'Herrera y Montes (aptitud)' })));
+if (ev && ev.completado) mias.push(...ev.top.slice(0, 10).map(c => ({ n: c.n, f: 'EVAPEM (top 10)' })));
+
+function coincidencias(area) {
+  const enc = new Map();
+  area.carreras.forEach(c => mias.forEach(m => { if (mismas(c, m.n)) { if (!enc.has(c)) enc.set(c, new Set()); enc.get(c).add(m.f); } }));
+  return enc;
+}
+const conteo = D.areas.map(a => ({ a, enc: coincidencias(a) })).sort((x, y) => y.enc.size - x.enc.size);
+const sugeridas = mias.length ? conteo.filter(x => x.enc.size > 0).slice(0, 2).map(x => x.a.id) : [];
+
+function optDe(area) { return cat === '6' ? { prio: area.opt6, comp: area.opt6comp, just: area.just6 } : { prio: area.opt5, comp: [], just: area.just5 }; }
+function catalogo() { return cat === '6' ? D.opt6 : D.opt5; }
+const optSugeridas = () => new Set(sugeridas.flatMap(id => optDe(D.areas.find(a => a.id === id)).prio));
+
+function pintar() {
+  document.querySelectorAll('[role=tab]').forEach(t => t.setAttribute('aria-selected', t.dataset.cat === cat));
+  document.getElementById('nota-cat').textContent = cat === '6'
+    ? 'Para alumnos de 5.º semestre que eligen sus dos optativas de 6.º. Los paquetes por área de 6.º son una propuesta del Departamento de Orientación.'
+    : 'Para alumnos de 4.º semestre que eligen sus optativas de 5.º.';
+  // Sugerencia
+  const sug = document.getElementById('sugerencia');
+  if (!mias.length) {
+    sug.innerHTML = `<h2>Tu sugerencia personalizada</h2><div class="aviso info">Completa el <a href="paso2-interpretacion.html">paso 2</a> o el <a href="paso3-evapem.html">paso 3</a> y aquí verás las áreas que más coinciden con tus resultados.</div>`;
+  } else if (!sugeridas.length) {
+    sug.innerHTML = `<h2>Tu sugerencia personalizada</h2><p class="sub">Tus carreras de los pasos anteriores no coinciden con las listas de este explorador. Busca tu carrera abajo o elige el área que más se le parezca.</p>`;
+  } else {
+    const os = optSugeridas();
+    sug.innerHTML = `<span class="etiqueta">Según tus pasos 2 y 3</span><h2>Áreas que más coinciden contigo</h2>` +
+      sugeridas.map(id => { const x = conteo.find(c => c.a.id === id); return `<p><b>${x.a.titulo}</b> — ${x.enc.size} de tus carreras: ${[...x.enc.keys()].map(c => `<span class="chip verde">${c}</span>`).join(' ')}</p>`; }).join('') +
+      `<p>Optativas que más te convienen: ${[...os].map(o => `<span class="chip marcada">${o}</span>`).join(' ')}</p><p class="sub" style="font-size:.86rem;margin:0">Es una orientación: si ya tienes clara otra carrera, guíate por su área.</p>`;
+  }
+  // Catálogo
+  const os = optSugeridas();
+  document.getElementById('catalogo').innerHTML = catalogo().map(o => {
+    const on = elegidas.includes(o.n);
+    return `<div class="optativa ${os.has(o.n) ? 'sugerida' : ''}"><h3>${o.n}</h3><p>${o.d}</p>
+      <button type="button" class="btn ${on ? '' : 'sec'}" style="margin-top:10px;padding:7px 12px;font-size:.88rem" aria-pressed="${on}" data-opt="${Ruta.esc(o.n)}">${on ? '✓ Elegida' : 'Elegir'}</button></div>`;
+  }).join('');
+  document.querySelectorAll('[data-opt]').forEach(b => b.onclick = () => {
+    const n = b.dataset.opt;
+    if (elegidas.includes(n)) elegidas = elegidas.filter(x => x !== n); else { elegidas.push(n); if (elegidas.length > 2) elegidas.shift(); }
+    guardar(); pintar();
+  });
+  document.getElementById('mis-opt').innerHTML = elegidas.length ? elegidas.map(e => `<span class="chip marcada">${e}</span>`).join('') : '<span class="sub">Aún no eliges.</span>';
+  pintarAreas();
+}
+
+function pintarAreas() {
+  const q = Ruta.norm(document.getElementById('buscar').value);
+  let visibles = 0;
+  const html = conteo.map(({ a, enc }) => {
+    const hits = q ? a.carreras.filter(c => Ruta.norm(c).includes(q)) : [];
+    if (q && !hits.length) return '';
+    visibles++;
+    const o = optDe(a);
+    return `<div class="area ${sugeridas.includes(a.id) ? 'destacada' : ''}">
+      <h3>${a.titulo}${enc.size ? `<span class="coincide">${enc.size} de tus carreras</span>` : ''}</h3>
+      <div class="chips" style="margin:8px 0 12px">${a.carreras.map(c => `<span class="chip ${hits.includes(c) ? 'marcada' : enc.has(c) ? 'verde' : ''}">${c}</span>`).join('')}</div>
+      <div class="rejilla dos">
+        <div><b>${cat === '6' ? 'Optativas recomendadas' : 'Paquete de optativas sugeridas'}</b>
+          <ul style="margin:6px 0 0;padding-left:18px">${o.prio.map(x => `<li>${x}</li>`).join('')}${o.comp.map(x => `<li>${x} <span class="sub">(complementaria)</span></li>`).join('')}</ul></div>
+        <div><b>¿Por qué?</b><ul style="margin:6px 0 0;padding-left:18px;font-size:.9rem">${o.just.map(x => `<li>${x}</li>`).join('')}</ul></div>
+      </div></div>`;
+  }).join('');
+  document.getElementById('areas').innerHTML = html;
+  const sr = document.getElementById('sin-resultado');
+  sr.classList.toggle('oculto', visibles > 0);
+  sr.textContent = visibles ? '' : 'No encontramos esa carrera en las listas. Elige el área de conocimiento que más se le parezca.';
+}
+
+function guardar() {
+  Ruta.guardar('optativas', { catalogo: cat, elegidas, sugeridas, completado: elegidas.length === 2 ? new Date().toISOString() : null });
+}
+
+if (Ruta.exigirAlumno(app)) {
+  document.querySelectorAll('[role=tab]').forEach(t => t.onclick = () => { if (cat !== t.dataset.cat) { cat = t.dataset.cat; elegidas = []; guardar(); pintar(); } });
+  document.getElementById('buscar').addEventListener('input', pintarAreas);
+  pintar();
+}
+</script>
+</body>
+</html>

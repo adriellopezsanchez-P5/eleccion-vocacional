@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paso 2 · Interpretación vocacional (Herrera y Montes)</title>
+<link rel="stylesheet" href="assets/estilos.css">
+</head>
+<body>
+<main class="contenedor" id="app">
+  <section class="tarjeta no-imprimir">
+    <span class="etiqueta">Paso 2 de 5</span>
+    <h1>Interpretación de tus resultados</h1>
+    <p class="sub">Tus dos intereses más altos se buscan en la <b>Tabla de Combinaciones</b> y tu aptitud más alta en la <b>Tabla de Aptitudes con Opciones Educativas</b> del manual institucional.</p>
+    <div id="origen"></div>
+  </section>
+
+  <!-- Captura manual (test en papel o corrección) -->
+  <section class="tarjeta no-imprimir oculto" id="captura">
+    <h2>Captura de porcentajes</h2>
+    <p class="sub">Escribe el porcentaje de cada columna tal como aparece en tu hoja de respuestas (0 a 100).</p>
+    <div class="rejilla dos">
+      <div><h3>Intereses</h3><div id="cap-int"></div></div>
+      <div><h3>Aptitudes</h3><div id="cap-apt"></div></div>
+    </div>
+    <div id="cap-error" class="aviso alerta oculto" role="alert"></div>
+    <div class="acciones"><button class="btn" type="button" id="btn-aplicar">Interpretar estos porcentajes</button></div>
+  </section>
+
+  <!-- Desempate -->
+  <section class="tarjeta no-imprimir oculto" id="desempate" aria-live="polite"></section>
+
+  <!-- Reporte -->
+  <section id="reporte" class="oculto">
+    <div class="tarjeta solo-impresion">
+      <strong>UAEMéx · Plantel "Dr. Ángel Ma. Garibay Kintana" · Departamento de Orientación Educativa</strong><br>
+      Reporte de Interpretación Vocacional · Herrera y Montes
+    </div>
+    <div class="tarjeta">
+      <h2>Ficha</h2>
+      <p id="rep-ficha" style="margin:0"></p>
+    </div>
+    <div class="rejilla dos">
+      <div class="tarjeta"><h2>Intereses predominantes</h2><div id="rep-int"></div></div>
+      <div class="tarjeta"><h2>Aptitud dominante</h2><div id="rep-apt"></div></div>
+    </div>
+    <div class="tarjeta">
+      <span class="etiqueta">Cruce 1 · Tabla de Combinaciones</span>
+      <h2 id="rep-comb-tit"></h2>
+      <div id="rep-comb"></div>
+    </div>
+    <div class="tarjeta">
+      <span class="etiqueta">Cruce 2 · Tabla de Aptitudes</span>
+      <h2 id="rep-apt-tit"></h2>
+      <div id="rep-aptlist"></div>
+    </div>
+    <div class="tarjeta" id="rep-coinciden"></div>
+    <div class="tarjeta">
+      <h3>Tus porcentajes</h3>
+      <div class="rejilla dos">
+        <div id="rep-tabla-int"></div><div id="rep-tabla-apt"></div>
+      </div>
+    </div>
+    <div class="aviso">Esta interpretación es un indicador de referencia basado en el modelo de Herrera y Montes. No es un dictamen absoluto: la elección profesional depende de tu reflexión, tus intereses y tu autonomía.</div>
+    <div class="tarjeta solo-impresion" style="margin-top:40px">
+      <div style="display:flex;justify-content:space-around;text-align:center;gap:30px">
+        <div style="flex:1;border-top:1px solid #333;padding-top:6px" id="firma-alumno"></div>
+        <div style="flex:1;border-top:1px solid #333;padding-top:6px" id="firma-orient"></div>
+      </div>
+    </div>
+    <div class="acciones no-imprimir">
+      <a class="btn" href="paso3-evapem.html">Continuar al paso 3: EVAPEM →</a>
+      <button class="btn sec" type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+    </div>
+  </section>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/ruta.js"></script>
+<script>
+Ruta.montarEncabezado(2);
+const D = window.DATOS;
+const app = document.getElementById('app');
+const NUM_I = Object.fromEntries(D.catInt.map(([k], i) => [k, i + 1]));
+const NOMBRE_I = Object.fromEntries(D.catInt), NOMBRE_A = Object.fromEntries(D.catApt);
+let pctInt = null, pctApt = null, fuente = '';
+let eleccionInt = [], eleccionApt = null;
+
+if (Ruta.exigirAlumno(app)) iniciar();
+
+function iniciar() {
+  const hm = Ruta.obtener('hm'), ip = Ruta.obtener('interp');
+  const origen = document.getElementById('origen');
+  if (hm && hm.completado) {
+    pctInt = { ...hm.pctInt }; pctApt = { ...hm.pctApt }; fuente = 'Paso 1 (cuestionario en línea)';
+    origen.innerHTML = `<div class="aviso info">Tus porcentajes se tomaron automáticamente del <b>paso 1</b> (${Ruta.fecha(hm.completado)}). No necesitas copiarlos.</div>
+      <button class="btn sec" type="button" id="btn-manual">Contesté el test en papel / quiero capturar otros porcentajes</button>`;
+  } else if (ip && ip.manual) {
+    pctInt = ip.pctInt; pctApt = ip.pctApt; fuente = 'Captura manual';
+    origen.innerHTML = `<div class="aviso">Estás usando porcentajes capturados a mano.</div><button class="btn sec" type="button" id="btn-manual">Editar porcentajes</button>`;
+  } else {
+    origen.innerHTML = `<div class="aviso">Aún no completas el paso 1. Puedes <a href="paso1-herrera-montes.html">contestar el cuestionario en línea</a> o, si lo hiciste en papel, capturar tus porcentajes aquí.</div>`;
+    mostrarCaptura(); return;
+  }
+  document.getElementById('btn-manual').onclick = mostrarCaptura;
+  if (ip && ip.int1 && ip.fuente === fuente) { eleccionInt = ip.eleccionInt || []; eleccionApt = ip.eleccionApt || null; }
+  interpretar();
+}
+
+function filaCaptura(pref, k, n, v) {
+  return `<div class="barra-fila" style="grid-template-columns:1fr 90px"><label for="${pref}-${k}" style="margin:0;font-weight:500">${n}</label>
+    <input id="${pref}-${k}" type="number" min="0" max="100" inputmode="numeric" value="${v ?? ''}" placeholder="%"></div>`;
+}
+function mostrarCaptura() {
+  document.getElementById('captura').classList.remove('oculto');
+  document.getElementById('cap-int').innerHTML = D.catInt.map(([k, n]) => filaCaptura('ci', k, n, pctInt && pctInt[k])).join('');
+  document.getElementById('cap-apt').innerHTML = D.catApt.map(([k, n]) => filaCaptura('ca', k, n, pctApt && pctApt[k])).join('');
+  document.getElementById('captura').scrollIntoView();
+}
+document.getElementById('btn-aplicar').onclick = () => {
+  const leer = (pref, cats) => { const o = {}; let ok = true;
+    cats.forEach(([k]) => { const raw = document.getElementById(`${pref}-${k}`).value.trim(); const v = Number(raw);
+      if (raw === '' || !Number.isInteger(v) || v < 0 || v > 100) ok = false; o[k] = v; });
+    return ok ? o : null; };
+  const i = leer('ci', D.catInt), a = leer('ca', D.catApt);
+  const err = document.getElementById('cap-error');
+  if (!i || !a) { err.textContent = 'Escribe los 20 porcentajes como números enteros entre 0 y 100.'; err.classList.remove('oculto'); return; }
+  err.classList.add('oculto');
+  pctInt = i; pctApt = a; fuente = 'Captura manual'; eleccionInt = []; eleccionApt = null;
+  document.getElementById('captura').classList.add('oculto');
+  interpretar(true);
+};
+
+/* Empates: quiénes entran seguro y entre quiénes hay que elegir */
+function analizarTop(pcts, cats, n) {
+  const ord = Ruta.ordenar(pcts, cats);
+  const corte = ord[n - 1].valor;
+  const seguros = ord.filter(x => x.valor > corte).map(x => x.clave);
+  const empatados = ord.filter(x => x.valor === corte).map(x => x.clave);
+  const hayEmpate = seguros.length + empatados.length > n;
+  return { ord, seguros, empatados, hayEmpate, faltan: n - seguros.length };
+}
+
+function interpretar(nuevo) {
+  const ti = analizarTop(pctInt, D.catInt, 2), ta = analizarTop(pctApt, D.catApt, 1);
+  if (ti.ord[0].valor === 0 && ta.ord[0].valor === 0) { document.getElementById('reporte').classList.add('oculto'); return; }
+  // Validar elecciones previas contra los empates actuales
+  if (!ti.hayEmpate || eleccionInt.length !== ti.faltan || !eleccionInt.every(k => ti.empatados.includes(k))) eleccionInt = ti.hayEmpate ? eleccionInt.filter(k => ti.empatados.includes(k)).slice(0, ti.faltan) : [];
+  if (!ta.hayEmpate || !ta.empatados.includes(eleccionApt)) eleccionApt = ta.hayEmpate && ta.empatados.includes(eleccionApt) ? eleccionApt : null;
+
+  const caja = document.getElementById('desempate');
+  const necesitaInt = ti.hayEmpate && eleccionInt.length !== ti.faltan;
+  const necesitaApt = ta.hayEmpate && !eleccionApt;
+  if (ti.hayEmpate || ta.hayEmpate) {
+    caja.classList.remove('oculto');
+    let h = '<h2>Tienes puntajes empatados</h2><p class="sub">Elige con cuál quieres trabajar. Piensa en cuál te identifica más; puedes cambiarlo cuando quieras.</p>';
+    if (ti.hayEmpate) {
+      h += `<h3>${ti.seguros.length ? `Tu interés más alto es <b>${NOMBRE_I[ti.seguros[0]]}</b>. ` : ''}Elige ${ti.faltan === 1 ? '1 interés' : '2 intereses'} entre estos (${pctInt[ti.empatados[0]]} %):</h3><div class="chips" role="group">` +
+        ti.empatados.map(k => `<button type="button" class="btn ${eleccionInt.includes(k) ? '' : 'sec'}" aria-pressed="${eleccionInt.includes(k)}" data-int="${k}">${NOMBRE_I[k]}</button>`).join('') + '</div>';
+    }
+    if (ta.hayEmpate) {
+      h += `<h3 style="margin-top:14px">Elige tu aptitud principal entre estas (${pctApt[ta.empatados[0]]} %):</h3><div class="chips" role="group">` +
+        ta.empatados.map(k => `<button type="button" class="btn ${eleccionApt === k ? 'oro' : 'sec'}" aria-pressed="${eleccionApt === k}" data-apt="${k}">${NOMBRE_A[k]}</button>`).join('') + '</div>';
+    }
+    caja.innerHTML = h;
+    caja.querySelectorAll('[data-int]').forEach(b => b.onclick = () => {
+      const k = b.dataset.int;
+      if (eleccionInt.includes(k)) eleccionInt = eleccionInt.filter(x => x !== k);
+      else { eleccionInt.push(k); if (eleccionInt.length > ti.faltan) eleccionInt.shift(); }
+      interpretar();
+    });
+    caja.querySelectorAll('[data-apt]').forEach(b => b.onclick = () => { eleccionApt = b.dataset.apt; interpretar(); });
+  } else caja.classList.add('oculto');
+
+  if (necesitaInt || necesitaApt) { document.getElementById('reporte').classList.add('oculto'); guardar(null); return; }
+  const ints = ti.hayEmpate ? [...ti.seguros, ...eleccionInt] : ti.ord.slice(0, 2).map(x => x.clave);
+  ints.sort((a, b) => pctInt[b] - pctInt[a]);
+  const apt = ta.hayEmpate ? eleccionApt : ta.ord[0].clave;
+  pintar(ints[0], ints[1], apt, ti.ord);
+  if (nuevo) document.getElementById('reporte').scrollIntoView();
+}
+
+function buscarComb(a, b) { const x = NUM_I[a], y = NUM_I[b]; return D.comb[`${Math.min(x, y)}-${Math.max(x, y)}`] || null; }
+
+function pintar(i1, i2, apt, ordI) {
+  const al = Ruta.alumno();
+  document.getElementById('reporte').classList.remove('oculto');
+  document.getElementById('rep-ficha').innerHTML = `<b>${Ruta.esc(al.nombre)}</b> · Grupo ${Ruta.esc(al.grupo)} · ${Ruta.esc(al.edad)} años · ${Ruta.esc(al.sexo)} · Orientador(a): ${Ruta.esc(al.docente)}<br><span class="sub">Fuente de los porcentajes: ${fuente} · ${Ruta.fecha()}</span>`;
+  document.getElementById('firma-alumno').textContent = al.nombre;
+  document.getElementById('firma-orient').textContent = 'Orientador(a): ' + al.docente;
+  const tarjetaCat = (k, nombres, descs, pcts, nivel, n) => `<div style="margin-bottom:12px"><b>${n}. ${nombres[k]} — ${pcts[k]} %</b> <span class="chip">${nivel(pcts[k])}</span><p class="sub" style="margin:4px 0 0;font-size:.9rem">${descs[k]}</p></div>`;
+  document.getElementById('rep-int').innerHTML = tarjetaCat(i1, NOMBRE_I, D.descInt, pctInt, Ruta.nivelInteres, '1°') + tarjetaCat(i2, NOMBRE_I, D.descInt, pctInt, Ruta.nivelInteres, '2°') +
+    (pctInt[i2] < 75 ? '<p class="sub" style="font-size:.85rem">El manual recomienda que los dos intereses estén de preferencia por encima del 75 %.</p>' : '');
+  document.getElementById('rep-apt').innerHTML = tarjetaCat(apt, NOMBRE_A, D.descApt, pctApt, Ruta.nivelAptitud, '1°');
+
+  // Cruce 1
+  let lista = buscarComb(i1, i2), nota = '', usado = [i1, i2];
+  document.getElementById('rep-comb-tit').textContent = `${NOMBRE_I[i1]} + ${NOMBRE_I[i2]}`;
+  if (!lista) {
+    // Combinación no incluida en la tabla del manual: se busca la más cercana entre tus intereses más altos
+    const cands = [];
+    ordI.slice(0, 5).forEach((x, a) => ordI.slice(0, 5).forEach((y, b) => {
+      if (b <= a) return; const l = buscarComb(x.clave, y.clave);
+      if (l && (x.clave === i1 || x.clave === i2 || y.clave === i1 || y.clave === i2)) cands.push({ a: x.clave, b: y.clave, s: x.valor + y.valor, l });
+    }));
+    cands.sort((p, q) => q.s - p.s);
+    if (cands.length) {
+      lista = cands[0].l; usado = [cands[0].a, cands[0].b];
+      nota = `<div class="aviso">La Tabla de Combinaciones del manual no incluye la combinación <b>${NOMBRE_I[i1]} – ${NOMBRE_I[i2]}</b>. Se muestra la combinación más cercana entre tus intereses más altos: <b>${NOMBRE_I[usado[0]]} – ${NOMBRE_I[usado[1]]}</b> (${pctInt[usado[0]]} % y ${pctInt[usado[1]]} %). Coméntalo con tu orientador(a).</div>`;
+    } else nota = `<div class="aviso">La Tabla de Combinaciones no incluye esta combinación. Revisa con tu orientador(a) las opciones de tu aptitud dominante.</div>`;
+  }
+  document.getElementById('rep-comb').innerHTML = nota + (lista ? `<p class="sub">Opciones educativas para la combinación de tus intereses (el orden de los dos rasgos no importa):</p><div class="chips">${lista.map(c => `<span class="chip">${c}</span>`).join('')}</div>` : '');
+  // Cruce 2
+  const listaA = D.aptOpc[apt] || [];
+  document.getElementById('rep-apt-tit').textContent = NOMBRE_A[apt];
+  document.getElementById('rep-aptlist').innerHTML = `<p class="sub">Opciones educativas que exigen un buen dominio de tu aptitud principal:</p><div class="chips">${listaA.map(c => `<span class="chip">${c}</span>`).join('')}</div>`;
+  // Coincidencias
+  const setI = new Set((lista || []).map(Ruta.norm));
+  const ambos = listaA.filter(c => setI.has(Ruta.norm(c)));
+  document.getElementById('rep-coinciden').innerHTML = ambos.length
+    ? `<span class="etiqueta">Donde se cruzan gusto y capacidad</span><h2>Aparecen en ambas tablas</h2><div class="chips">${ambos.map(c => `<span class="chip marcada">${c}</span>`).join('')}</div><p class="sub" style="margin-top:8px">Estas opciones coinciden con tus intereses y con tu aptitud dominante: son buenas candidatas para investigar a fondo.</p>`
+    : `<h2>Gusto y capacidad</h2><p class="sub">Ninguna opción aparece en las dos listas. Es común: compara ambas con tu orientador(a) y piensa qué peso le das a lo que te gusta y a lo que se te facilita.</p>`;
+  // Tablas
+  const tabla = (cats, pcts, nivel) => `<table><thead><tr><th>Área</th><th class="num">%</th><th>Nivel</th></tr></thead><tbody>${cats.map(([k, n]) => `<tr><td>${n}</td><td class="num">${pcts[k]}</td><td>${nivel(pcts[k])}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('rep-tabla-int').innerHTML = '<h3>Intereses</h3>' + tabla(D.catInt, pctInt, Ruta.nivelInteres);
+  document.getElementById('rep-tabla-apt').innerHTML = '<h3>Aptitudes</h3>' + tabla(D.catApt, pctApt, Ruta.nivelAptitud);
+  guardar({ int1: i1, int2: i2, apt, combUsada: usado, alternativa: !!nota && !!lista, carrerasInt: lista || [], carrerasApt: listaA, coinciden: ambos });
+}
+
+function guardar(r) {
+  const base = { pctInt, pctApt, fuente, manual: fuente === 'Captura manual', eleccionInt, eleccionApt };
+  Ruta.guardar('interp', r ? { ...base, ...r, completado: new Date().toISOString() } : { ...base, completado: null });
+}
+</script>
+</body>
+</html>
