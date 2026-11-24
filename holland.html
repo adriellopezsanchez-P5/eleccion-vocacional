@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test de Holland | Elección Vocacional</title>
+<link rel="preload" href="assets/fuentes/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/estilos.css">
+<style>
+  .adjetivos{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+  .adjetivos label{display:flex;align-items:center;gap:10px;border:1px solid var(--linea);border-radius:var(--r-chico);padding:9px 12px;font-weight:500;cursor:pointer;margin:0;background:#fff}
+  .adjetivos input{width:18px;height:18px;accent-color:var(--cobalto);flex:none}
+  .adjetivos label:has(input:checked){border-color:var(--cobalto);background:var(--cobalto-claro)}
+  .escala td,.escala th{vertical-align:middle}
+  .escala th.op,.escala td.op{text-align:center;width:120px}
+  .escala input{width:20px;height:20px;accent-color:var(--cobalto)}
+  .escala tr.falta td:first-child{color:var(--rojo);font-weight:600}
+  .eleccion{border:0;padding:0;margin:0 0 22px}
+  .eleccion legend{font-family:var(--titulos);font-weight:600;font-size:1.05rem;margin-bottom:8px}
+  .eleccion label{display:flex;gap:10px;align-items:flex-start;font-weight:500;margin:0 0 6px;cursor:pointer}
+  .eleccion input{width:18px;height:18px;margin-top:3px;accent-color:var(--cobalto);flex:none}
+  .eleccion.falta legend{color:var(--rojo)}
+  .codigo{display:flex;gap:10px;margin:6px 0 14px}
+  .codigo span{width:64px;height:64px;border-radius:var(--r);display:grid;place-items:center;font-family:var(--titulos);font-weight:800;font-size:2rem;background:var(--tinta);color:#fff}
+  .codigo span:first-child{background:var(--cobalto)}
+  @media (max-width:640px){.escala th.op,.escala td.op{width:64px;font-size:.78rem}}
+</style>
+</head>
+<body>
+<main class="contenedor" id="app">
+  <section id="v-form">
+    <div class="intro">
+      <span class="paso" data-paso></span>
+      <h1>Test de intereses profesionales de Holland</h1>
+      <p class="sub">Cuatro partes para describirte: adjetivos, habilidades, metas y preferencias. El resultado es tu código de tres letras, que resume tu personalidad vocacional.</p>
+    </div>
+    <div class="aviso info no-imprimir">Responde según cómo eres, no según cómo te gustaría ser. Todo se guarda automáticamente.</div>
+
+    <div class="tarjeta">
+      <h2>Parte A. ¿Cómo eres?</h2>
+      <p class="sub">Marca todos los adjetivos que te describan. Puedes marcar tantos como quieras.</p>
+      <div class="adjetivos" id="parte-a"></div>
+      <p class="sub" id="cuenta-a" style="margin:12px 0 0;font-size:.92rem"></p>
+    </div>
+
+    <div class="tarjeta">
+      <h2>Parte B. Comparado con personas de tu edad</h2>
+      <p class="sub">¿Cuánto tienes de cada característica?</p>
+      <div style="overflow-x:auto"><table class="escala" id="parte-b"></table></div>
+    </div>
+
+    <div class="tarjeta">
+      <h2>Parte C. Tus metas</h2>
+      <p class="sub">¿Qué importancia le das a cada logro o aspiración?</p>
+      <div style="overflow-x:auto"><table class="escala" id="parte-c"></table></div>
+    </div>
+
+    <div class="tarjeta">
+      <h2>Parte D. Tus preferencias</h2>
+      <p class="sub">Elige una sola opción en cada pregunta, la que más se ajuste a ti.</p>
+      <div id="parte-d"></div>
+    </div>
+
+    <div id="error" class="aviso alerta oculto" role="alert"></div>
+    <div class="acciones">
+      <button class="btn" type="button" id="btn-calcular">Ver mi código Holland</button>
+    </div>
+  </section>
+
+  <section id="v-res" class="oculto">
+    <div class="intro" style="max-width:none">
+      <span class="paso">Resultados</span>
+      <h1>Tu código Holland</h1>
+      <p class="sub" id="r-ficha"></p>
+    </div>
+    <div class="solo-impresion tarjeta">Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx. Test de Intereses Profesionales de Holland.</div>
+    <div class="rejilla dos">
+      <div class="tarjeta">
+        <h2>Tu perfil</h2>
+        <div class="codigo" id="r-codigo" aria-label="Código Holland"></div>
+        <div id="r-empate"></div>
+        <div id="r-barras"></div>
+      </div>
+      <div class="tarjeta">
+        <h2>Cuadro resumen</h2>
+        <div style="overflow-x:auto"><table id="r-tabla"></table></div>
+      </div>
+    </div>
+    <div id="r-tipos"></div>
+    <div class="aviso">El código Holland describe tus preferencias de ambiente de trabajo; no mide tu capacidad. Úsalo junto con tus otros resultados.</div>
+    <div class="acciones no-imprimir">
+      <a class="btn" data-siguiente href="evapem.html">Continuar</a>
+      <button class="btn sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
+      <button class="btn sec" type="button" id="btn-editar">Cambiar mis respuestas</button>
+    </div>
+  </section>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/datos-tests.js"></script>
+<script src="assets/ruta.js"></script>
+<script src="assets/revision.js"></script>
+<script>
+Ruta.montarEncabezado('holland.html');
+const H = window.TESTS.holland;
+const TIPO = Object.fromEntries(H.tipos.map(t => [t.d, t]));
+const app = document.getElementById('app');
+let st = Ruta.obtener('holland') || {};
+st.a = st.a || []; st.b = st.b || Array(18).fill(null); st.c = st.c || Array(18).fill(null); st.d = st.d || Array(5).fill(null);
+const guardar = () => Ruta.guardar('holland', st);
+
+if (Ruta.exigirAlumno(app)) { pintarForm(); if (st.completado) mostrar(); }
+
+function pintarForm() {
+  document.getElementById('parte-a').innerHTML = H.adjetivos.map((t, i) => `<label><input type="checkbox" value="${i + 1}" ${st.a.includes(i + 1) ? 'checked' : ''}>${t}</label>`).join('');
+  document.querySelectorAll('#parte-a input').forEach(c => c.addEventListener('change', () => {
+    st.a = [...document.querySelectorAll('#parte-a input:checked')].map(x => +x.value); invalidar(); contarA();
+  }));
+  contarA();
+  const escala = (id, items, cab, clave) => {
+    document.getElementById(id).innerHTML = `<thead><tr><th></th>${cab.map(c => `<th class="op">${c}</th>`).join('')}</tr></thead><tbody>` +
+      items.map((t, i) => `<tr data-i="${i}"><td>${i + 1}. ${t}</td>${[0, 1, 2].map(o => `<td class="op"><input type="radio" name="${id}-${i}" value="${o}" aria-label="${t}: ${cab[o]}" ${st[clave][i] === o ? 'checked' : ''}></td>`).join('')}</tr>`).join('') + '</tbody>';
+    document.querySelectorAll(`#${id} input`).forEach(r => r.addEventListener('change', () => {
+      const i = +r.closest('tr').dataset.i; st[clave][i] = +r.value; r.closest('tr').classList.remove('falta'); invalidar();
+    }));
+  };
+  escala('parte-b', H.partB, ['Más que los demás', 'Igual que los demás', 'Menos que los demás'], 'b');
+  escala('parte-c', H.partC, ['Muy importante', 'Más o menos importante', 'Poco importante'], 'c');
+  document.getElementById('parte-d').innerHTML = H.partD.map((q, i) => `<fieldset class="eleccion" data-i="${i}"><legend>${i + 1}. ${q.p}</legend>` +
+    Object.entries(q.o).map(([l, t]) => `<label><input type="radio" name="d-${i}" value="${l}" ${st.d[i] === l ? 'checked' : ''}>${t}</label>`).join('') + '</fieldset>').join('');
+  document.querySelectorAll('#parte-d input').forEach(r => r.addEventListener('change', () => {
+    const i = +r.closest('fieldset').dataset.i; st.d[i] = r.value; r.closest('fieldset').classList.remove('falta'); invalidar();
+  }));
+}
+function contarA() { document.getElementById('cuenta-a').textContent = st.a.length ? `Marcaste ${st.a.length} adjetivo${st.a.length === 1 ? '' : 's'}.` : 'Aún no marcas ningún adjetivo.'; }
+function invalidar() { st.completado = null; guardar(); }
+
+document.getElementById('btn-calcular').onclick = () => {
+  const err = document.getElementById('error');
+  const fb = st.b.map((v, i) => v === null ? i : -1).filter(i => i >= 0), fc = st.c.map((v, i) => v === null ? i : -1).filter(i => i >= 0), fd = st.d.map((v, i) => v === null ? i : -1).filter(i => i >= 0);
+  document.querySelectorAll('#parte-b tr[data-i]').forEach(tr => tr.classList.toggle('falta', fb.includes(+tr.dataset.i)));
+  document.querySelectorAll('#parte-c tr[data-i]').forEach(tr => tr.classList.toggle('falta', fc.includes(+tr.dataset.i)));
+  document.querySelectorAll('#parte-d fieldset').forEach(f => f.classList.toggle('falta', fd.includes(+f.dataset.i)));
+  const partes = [];
+  if (!st.a.length) partes.push('marca al menos un adjetivo en la parte A');
+  if (fb.length) partes.push(`contesta ${fb.length} característica(s) de la parte B`);
+  if (fc.length) partes.push(`contesta ${fc.length} meta(s) de la parte C`);
+  if (fd.length) partes.push(`elige una opción en ${fd.length} pregunta(s) de la parte D`);
+  if (partes.length) { err.textContent = 'Para ver tu código, ' + partes.join('; ') + '. Lo que falta está marcado en rojo.'; err.classList.remove('oculto'); return; }
+  err.classList.add('oculto');
+  calcular(); mostrar();
+};
+document.getElementById('btn-editar').onclick = () => { document.getElementById('v-res').classList.add('oculto'); document.getElementById('v-form').classList.remove('oculto'); window.scrollTo(0, 0); };
+
+/* Calificación según la Tabla de Conversión del formato */
+function calcular() {
+  const pt = {}; for (let d = 1; d <= 6; d++) pt[d] = { A: 0, B: 0, C: 0, D: 0, total: 0 };
+  for (let d = 1; d <= 6; d++) {
+    pt[d].A = H.claveA[d].filter(n => st.a.includes(n)).length;
+    pt[d].B = H.claveB[d].filter(n => H.letrasB[n][st.b[n - 1]] === 'A').length;
+    pt[d].C = H.claveC[d].filter(n => H.letrasC[n][st.c[n - 1]] === 'A').length;
+    pt[d].D = H.claveD.filter((fila, q) => st.d[q] === fila[d - 1]).length;
+    pt[d].total = pt[d].A + pt[d].B + pt[d].C + pt[d].D;
+  }
+  const orden = [1, 2, 3, 4, 5, 6].sort((x, y) => pt[y].total - pt[x].total || x - y);
+  const corte = pt[orden[2]].total;
+  const empatados = orden.filter(d => pt[d].total === corte);
+  const seguros = orden.filter(d => pt[d].total > corte);
+  Object.assign(st, { puntos: pt, codigo: orden.slice(0, 3).map(d => TIPO[d].id).join(''), top: orden.slice(0, 3).map(d => TIPO[d].id),
+    empate: seguros.length + empatados.length > 3 ? empatados.map(d => TIPO[d].id) : [], completado: new Date().toISOString() });
+  guardar();
+}
+
+function mostrar() {
+  document.getElementById('v-form').classList.add('oculto'); document.getElementById('v-res').classList.remove('oculto'); window.scrollTo(0, 0);
+  const al = Ruta.alumno(), pt = st.puntos;
+  document.getElementById('r-ficha').textContent = `${al.nombre}, grupo ${al.grupo}. ${Ruta.fecha(st.completado)}`;
+  document.getElementById('r-codigo').innerHTML = st.codigo.split('').map(l => `<span>${l}</span>`).join('');
+  document.getElementById('r-empate').innerHTML = st.empate.length ? `<div class="aviso">Hay un empate en el tercer lugar entre ${st.empate.map(id => H.tipos.find(t => t.id === id).nombre).join(', ')}. Considera también esos tipos.</div>` : '';
+  const max = Math.max(...Object.values(pt).map(p => p.total), 1);
+  document.getElementById('r-barras').innerHTML = Ruta.barras(H.tipos.map(t => ({ clave: t.id, nombre: `${t.nombre} (${t.id})`, valor: Math.round(pt[t.d].total / max * 100), texto: String(pt[t.d].total) }))
+    .sort((a, b) => pt[H.tipos.find(t => t.id === b.clave).d].total - pt[H.tipos.find(t => t.id === a.clave).d].total), { resaltar: st.top });
+  document.getElementById('r-tabla').innerHTML = `<thead><tr><th>Tipo</th><th class="num">A</th><th class="num">B</th><th class="num">C</th><th class="num">D</th><th class="num">Total</th></tr></thead><tbody>` +
+    H.tipos.map(t => `<tr><td>${t.nombre}</td><td class="num">${pt[t.d].A}</td><td class="num">${pt[t.d].B}</td><td class="num">${pt[t.d].C}</td><td class="num">${pt[t.d].D}</td><td class="num"><b>${pt[t.d].total}</b></td></tr>`).join('') + '</tbody>';
+  document.getElementById('r-tipos').innerHTML = '<div class="rejilla tres">' + st.top.map((id, i) => { const t = H.tipos.find(x => x.id === id); return `<div class="tarjeta ${i === 0 ? 'oro' : ''}">
+    <span class="etiqueta">${['Tipo principal', 'Segundo tipo', 'Tercer tipo'][i]}</span><h2>${t.nombre} (${t.id})</h2><p style="font-size:.96rem">${t.desc}</p>
+    <div class="chips">${t.carreras.map(c => `<span class="chip">${c}</span>`).join('')}</div></div>`; }).join('') + '</div>';
+}
+
+/* Modo de revisión: respuestas de ejemplo con perfil Social-Investigador */
+window.autollenar = function () {
+  const r = n => Math.floor(Math.random() * n);
+  st = { a: [14, 15, 16, 22, 8, 36, 4, 20].concat([r(45) + 1]), b: Array.from({ length: 18 }, (_, i) => [5, 8, 17, 9, 13, 14].includes(i + 1) ? 0 : 1 + r(2)), c: Array.from({ length: 18 }, (_, i) => [3, 14, 18, 4, 9].includes(i + 1) ? 0 : r(3)), d: ['d', 'e', 'a', 'a', 'f'] };
+  st.a = [...new Set(st.a)];
+  pintarForm(); calcular(); mostrar();
+};
+</script>
+</body>
+</html>

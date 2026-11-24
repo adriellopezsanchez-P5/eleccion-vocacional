@@ -48,3 +48,21 @@ Además:
 - Las fuentes vienen incluidas en el repositorio, así que no dependen de Google Fonts.
 - Ya no se usa Tailwind CDN ni Chart.js, para que las páginas no fallen si esos servicios cambian.
 - Se hicieron ajustes de accesibilidad: foco visible, botones accesibles con teclado y textos para lectores de pantalla.
+
+## Nuevos tests (noviembre 2026)
+### CHASIDE
+- 98 preguntas de sí o no, una por pantalla, con guardado automático y teclas S/N.
+- Calificación con el cuadro del formato: cada "sí" suma un punto al área y tipo (10 de interés y 4 de aptitud por área). Se muestran las dos áreas con mayor puntuación (con empates), sus intereses y aptitudes característicos y el área de mayor interés frente a la de mayor aptitud.
+- Adaptaciones de redacción al español de México, sin cambiar el sentido: "provincia" por "estado", "ordenador" por "computadora", "preferís" por "prefieres", "no videntes" por "personas ciegas", y la pregunta 98 sobre el PIB en una sola pregunta.
+- Las carreras de ejemplo de cada área no vienen en el formato; son orientativas.
+
+### Holland
+- Las cuatro partes (adjetivos, comparación con otros, metas y preferencias) en una sola página que se guarda sola. Antes de calcular, señala en rojo lo que falta.
+- Calificación con la Tabla de Conversión del formato, incluidos los reactivos que puntúan al revés (B1 "Distraído", B16 "Comprensión de sí mismo" y C12 "Haber leído mucho"). El código son las tres dimensiones más altas; si hay empate en el tercer lugar, se avisa.
+- Se verificó la calificación automática contra las tablas del formato con 25 casos al azar.
+
+### Integración
+- Las optativas sugeridas ahora suman las carreras de Herrera y Montes y EVAPEM, las dos áreas CHASIDE y el código Holland.
+- El reporte final incluye CHASIDE y Holland.
+- Los archivos ya no llevan número (por ejemplo `chaside.html`), y la numeración de pasos es automática.
+- Nuevo modo de revisión para el orientador(a) con llenado automático (ver README).

@@ -15,12 +15,15 @@
 
   const PASOS = [
     { n: 0, archivo: 'index.html', corto: 'Tus datos' },
-    { n: 1, archivo: 'paso1-herrera-montes.html', corto: 'Herrera y Montes', clave: 'hm' },
-    { n: 2, archivo: 'paso2-interpretacion.html', corto: 'Interpretación', clave: 'interp' },
-    { n: 3, archivo: 'paso3-evapem.html', corto: 'EVAPEM', clave: 'evapem' },
-    { n: 4, archivo: 'paso4-optativas.html', corto: 'Optativas', clave: 'optativas' },
-    { n: 5, archivo: 'paso5-mi-ruta.html', corto: 'Mi reporte' }
+    { n: 1, archivo: 'herrera-montes.html', corto: 'Herrera y Montes', clave: 'hm' },
+    { n: 2, archivo: 'interpretacion.html', corto: 'Interpretación', clave: 'interp' },
+    { n: 3, archivo: 'chaside.html', corto: 'CHASIDE', clave: 'chaside' },
+    { n: 4, archivo: 'holland.html', corto: 'Holland', clave: 'holland' },
+    { n: 5, archivo: 'evapem.html', corto: 'EVAPEM', clave: 'evapem' },
+    { n: 6, archivo: 'optativas.html', corto: 'Optativas', clave: 'optativas' },
+    { n: 7, archivo: 'reporte.html', corto: 'Mi reporte' }
   ];
+  const TOTAL = PASOS.length - 2; // pasos con instrumento (sin "Tus datos" ni el reporte)
 
   const Ruta = {
     PASOS,
@@ -36,7 +39,12 @@
     fecha(iso) { const d = iso ? new Date(iso) : new Date(); return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }); },
 
     /* Encabezado común con la ruta de pasos */
-    montarEncabezado(pasoActual) {
+    paso(archivo) { return PASOS.find(p => p.archivo === archivo) || PASOS[0]; },
+    siguiente(archivo) { const i = PASOS.findIndex(p => p.archivo === archivo); return PASOS[Math.min(i + 1, PASOS.length - 1)]; },
+    pendiente() { for (const p of PASOS) if (p.clave && !Ruta.completo(p.clave)) return p; return PASOS[PASOS.length - 1]; },
+
+    montarEncabezado(archivo) {
+      const pasoActual = Ruta.paso(archivo).n;
       const a = Ruta.alumno();
       const sitio = document.createElement('header');
       sitio.className = 'sitio';
@@ -46,15 +54,15 @@
             Elección Vocacional</a>
           <nav class="menu" aria-label="Sitio">
             <a href="index.html" ${pasoActual === 0 ? 'aria-current="page"' : ''}>Cómo funciona</a>
-            <a href="paso4-optativas.html" ${pasoActual === 4 ? 'aria-current="page"' : ''}>Optativas</a>
-            <a href="paso5-mi-ruta.html" ${pasoActual === 5 ? 'aria-current="page"' : ''}>Mi reporte</a>
+            <a href="optativas.html" ${archivo === 'optativas.html' ? 'aria-current="page"' : ''}>Optativas</a>
+            <a href="reporte.html" ${archivo === 'reporte.html' ? 'aria-current="page"' : ''}>Mi reporte</a>
           </nav>
           <div class="usuario">${a ? '<b>' + Ruta.esc(a.nombre) + '</b>Grupo ' + Ruta.esc(a.grupo) : '<a href="index.html#ficha">Registrar mis datos</a>'}</div>
         </div>`;
       const nav = document.createElement('nav');
       nav.className = 'trayecto';
       nav.setAttribute('aria-label', 'Pasos de la ruta');
-      nav.innerHTML = '<ol>' + PASOS.map(p => {
+      nav.innerHTML = `<ol style="grid-template-columns:repeat(${PASOS.length},1fr)">` + '' + PASOS.map(p => {
         const hecho = p.n === 0 ? !!a : (p.clave ? Ruta.completo(p.clave) : false);
         const cls = [p.n === pasoActual ? 'actual' : '', hecho ? 'hecho' : ''].join(' ').trim();
         return `<li class="${cls}"><a href="${p.archivo}" ${p.n === pasoActual ? 'aria-current="step"' : ''}>
@@ -68,15 +76,25 @@
       pie.innerHTML = `<div class="contenedor"><div><b>Elección Vocacional</b><br>Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx</div>
         <div>Tus respuestas se guardan solo en este navegador.</div></div>`;
       document.body.append(pie);
+      // Numeración y botón "continuar" calculados a partir de la lista de pasos
+      document.querySelectorAll('[data-paso]').forEach(el => { el.textContent = `Paso ${pasoActual} de ${TOTAL + 1}`; });
+      const sig = Ruta.siguiente(archivo);
+      document.querySelectorAll('[data-siguiente]').forEach(el => { el.href = sig.archivo; el.textContent = sig.archivo === 'reporte.html' ? 'Ver mi reporte final' : `Continuar con ${sig.corto}`; });
+      if (window.Revision) window.Revision.montar(archivo);
     },
 
     /* Si falta la ficha del alumno, muestra un aviso con enlace al inicio */
     exigirAlumno(contenedor) {
       if (Ruta.alumno()) return true;
-      contenedor.innerHTML = `<div class="tarjeta"><div class="aviso">Antes de continuar registra tus datos en el inicio de la ruta.</div>
-        <a class="btn" href="index.html">Ir al inicio</a></div>`;
+      // Se ocultan los elementos (no se borran) para que los scripts de la página sigan funcionando
+      [...contenedor.children].forEach(el => el.classList.add('oculto'));
+      const aviso = document.createElement('div');
+      aviso.className = 'tarjeta';
+      aviso.innerHTML = `<div class="aviso">Antes de continuar registra tus datos en el inicio de la ruta.</div><a class="btn" href="index.html#ficha">Registrar mis datos</a>`;
+      contenedor.prepend(aviso);
       return false;
     },
+
 
     /* Barras horizontales sin librerías */
     barras(items, opciones = {}) {
@@ -84,8 +102,8 @@
       return '<div class="barras">' + items.map(it => `
         <div class="barra-fila ${resaltar.has(it.clave) ? 'top' : ''}">
           <span class="nombre">${Ruta.esc(it.nombre)}</span>
-          <div class="barra-pista" role="img" aria-label="${Ruta.esc(it.nombre)}: ${it.valor}%"><div class="barra-relleno ${opciones.clase || ''}" style="width:${Math.max(0, Math.min(100, it.valor))}%"></div></div>
-          <span class="valor">${it.valor}%</span>
+          <div class="barra-pista${it.texto != null ? ' sin-marcas' : ''}" role="img" aria-label="${Ruta.esc(it.nombre)}: ${it.texto != null ? it.texto : it.valor + '%'}"><div class="barra-relleno ${opciones.clase || ''}" style="width:${Math.max(0, Math.min(100, it.valor))}%"></div></div>
+          <span class="valor">${it.texto != null ? it.texto : it.valor + '%'}</span>
         </div>`).join('') + '</div>';
     },
 

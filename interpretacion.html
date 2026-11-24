@@ -10,7 +10,7 @@
 <body>
 <main class="contenedor" id="app">
   <section class="intro no-imprimir">
-    <span class="paso">Paso 2 de 5</span>
+    <span class="paso" data-paso></span>
     <h1>Interpretación de tus resultados</h1>
     <p class="sub">Tus dos intereses más altos se buscan en la <b>Tabla de Combinaciones</b> y tu aptitud más alta en la <b>Tabla de Aptitudes con Opciones Educativas</b> del manual institucional.</p>
     <div id="origen"></div>
@@ -70,15 +70,16 @@
       </div>
     </div>
     <div class="acciones no-imprimir">
-      <a class="btn" href="paso3-evapem.html">Continuar al paso 3: EVAPEM</a>
+      <a class="btn" data-siguiente href="chaside.html">Continuar</a>
       <button class="btn sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
     </div>
   </section>
 </main>
 <script src="assets/datos.js"></script>
 <script src="assets/ruta.js"></script>
+<script src="assets/revision.js"></script>
 <script>
-Ruta.montarEncabezado(2);
+Ruta.montarEncabezado('interpretacion.html');
 const D = window.DATOS;
 const app = document.getElementById('app');
 const NUM_I = Object.fromEntries(D.catInt.map(([k], i) => [k, i + 1]));
@@ -92,14 +93,14 @@ function iniciar() {
   const hm = Ruta.obtener('hm'), ip = Ruta.obtener('interp');
   const origen = document.getElementById('origen');
   if (hm && hm.completado) {
-    pctInt = { ...hm.pctInt }; pctApt = { ...hm.pctApt }; fuente = 'Paso 1 (cuestionario en línea)';
-    origen.innerHTML = `<div class="aviso info">Tus porcentajes se tomaron automáticamente del <b>paso 1</b> (${Ruta.fecha(hm.completado)}). No necesitas copiarlos.</div>
+    pctInt = { ...hm.pctInt }; pctApt = { ...hm.pctApt }; fuente = 'Cuestionario Herrera y Montes en línea';
+    origen.innerHTML = `<div class="aviso info">Tus porcentajes se tomaron automáticamente del <b>cuestionario Herrera y Montes</b> (${Ruta.fecha(hm.completado)}). No necesitas copiarlos.</div>
       <button class="btn sec" type="button" id="btn-manual">Contesté el test en papel / quiero capturar otros porcentajes</button>`;
   } else if (ip && ip.manual) {
     pctInt = ip.pctInt; pctApt = ip.pctApt; fuente = 'Captura manual';
     origen.innerHTML = `<div class="aviso">Estás usando porcentajes capturados a mano.</div><button class="btn sec" type="button" id="btn-manual">Editar porcentajes</button>`;
   } else {
-    origen.innerHTML = `<div class="aviso">Aún no completas el paso 1. Puedes <a href="paso1-herrera-montes.html">contestar el cuestionario en línea</a> o, si lo hiciste en papel, capturar tus porcentajes aquí.</div>`;
+    origen.innerHTML = `<div class="aviso">Aún no contestas el cuestionario Herrera y Montes. Puedes <a href="herrera-montes.html">contestar el cuestionario en línea</a> o, si lo hiciste en papel, capturar tus porcentajes aquí.</div>`;
     mostrarCaptura(); return;
   }
   document.getElementById('btn-manual').onclick = mostrarCaptura;
@@ -231,6 +232,19 @@ function guardar(r) {
   const base = { pctInt, pctApt, fuente, manual: fuente === 'Captura manual', eleccionInt, eleccionApt };
   Ruta.guardar('interp', r ? { ...base, ...r, completado: new Date().toISOString() } : { ...base, completado: null });
 }
+
+/* Modo de revisión: usa los porcentajes del cuestionario (o unos de ejemplo) y resuelve empates eligiendo los primeros */
+window.autollenar = function () {
+  if (!pctInt) {
+    const r = () => [25, 41, 50, 62, 75, 83, 91][Math.floor(Math.random() * 7)];
+    pctInt = Object.fromEntries(D.catInt.map(([k]) => [k, r()])); pctApt = Object.fromEntries(D.catApt.map(([k]) => [k, r()])); fuente = 'Captura manual';
+    document.getElementById('captura').classList.add('oculto');
+  }
+  const ti = analizarTop(pctInt, D.catInt, 2), ta = analizarTop(pctApt, D.catApt, 1);
+  eleccionInt = ti.hayEmpate ? ti.empatados.slice(0, ti.faltan) : [];
+  eleccionApt = ta.hayEmpate ? ta.empatados[0] : null;
+  interpretar(true);
+};
 </script>
 </body>
 </html>

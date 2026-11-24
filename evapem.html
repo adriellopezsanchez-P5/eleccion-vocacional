@@ -10,7 +10,7 @@
 <body>
 <main class="contenedor" id="app">
   <section class="intro no-imprimir">
-    <span class="paso">Paso 3 de 5</span>
+    <span class="paso" data-paso></span>
     <h1>Perfil vocacional EVAPEM IV</h1>
     <p class="sub">Compara los rasgos más altos de tu gráfica EVAPEM con el perfil de ingreso de 80 opciones educativas.</p>
     <ol style="padding-left:20px;margin:10px 0">
@@ -55,7 +55,7 @@
       </div>
       <div class="aviso">Este análisis es una herramienta de apoyo para tu decisión y no debe tomarse como absoluto. Compleméntalo con tu reflexión personal y la guía de tu orientador(a).</div>
       <div class="acciones no-imprimir">
-        <a class="btn" href="paso4-optativas.html">Continuar al paso 4: Optativas</a>
+        <a class="btn" data-siguiente href="optativas.html">Continuar</a>
         <button class="btn sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
       </div>
     </div>
@@ -63,8 +63,9 @@
 </main>
 <script src="assets/datos.js"></script>
 <script src="assets/ruta.js"></script>
+<script src="assets/revision.js"></script>
 <script>
-Ruta.montarEncabezado(3);
+Ruta.montarEncabezado('evapem.html');
 const D = window.DATOS;
 const AREAS = { SOC: 'Sociales, Administración y Derecho', ING: 'Ingeniería, Manufactura y Construcción', SAL: 'Ciencias de la Salud', NAT: 'Ciencias Naturales, Exactas y Computación', AGR: 'Agronomía y Veterinaria', EDU: 'Educación y Humanidades', ART: 'Artes y Diseño' };
 const app = document.getElementById('app');
@@ -127,6 +128,13 @@ function calcular() {
   document.getElementById('ficha-imp').innerHTML = `<b>${Ruta.esc(al.nombre)}</b>, grupo ${Ruta.esc(al.grupo)}, Orientador(a): ${Ruta.esc(al.docente)}, ${Ruta.fecha()}<br>Rasgos marcados: ${[...sel].sort((a, b) => a - b).join(', ')}`;
   Ruta.guardar('evapem', { rasgos: [...sel], top: res.slice(0, 15).map(({ n, a, afin, m, req }) => ({ n, a, afin, m, req })), areas, completado: new Date().toISOString() });
 }
+
+/* Modo de revisión: 10 rasgos al azar */
+window.autollenar = function () {
+  const todos = Array.from({ length: 38 }, (_, i) => i + 1).sort(() => Math.random() - .5);
+  sel = new Set(todos.slice(0, 10)); actualizar();
+  document.getElementById('bloque-res').scrollIntoView();
+};
 </script>
 </body>
 </html>

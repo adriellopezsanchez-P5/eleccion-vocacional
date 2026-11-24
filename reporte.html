@@ -11,7 +11,7 @@
 <main class="contenedor" id="app">
   <section class="intro">
     <div class="solo-impresion" style="margin-bottom:8px"><strong>Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx</strong></div>
-    <span class="paso">Paso 5 de 5</span>
+    <span class="paso" data-paso></span>
     <h1>Mi reporte vocacional</h1>
     <p id="ficha" style="margin:0"></p>
   </section>
@@ -19,6 +19,8 @@
 
   <section class="tarjeta" id="s-hm"></section>
   <section class="tarjeta" id="s-interp"></section>
+  <section class="tarjeta" id="s-chaside"></section>
+  <section class="tarjeta" id="s-holland"></section>
   <section class="tarjeta" id="s-evapem"></section>
   <section class="tarjeta" id="s-opt"></section>
 
@@ -42,9 +44,11 @@
   </div>
 </main>
 <script src="assets/datos.js"></script>
+<script src="assets/datos-tests.js"></script>
 <script src="assets/ruta.js"></script>
+<script src="assets/revision.js"></script>
 <script>
-Ruta.montarEncabezado(5);
+Ruta.montarEncabezado('reporte.html');
 const D = window.DATOS, app = document.getElementById('app');
 if (Ruta.exigirAlumno(app)) armar();
 
@@ -56,41 +60,57 @@ function armar() {
 
   const falta = Ruta.PASOS.filter(p => p.clave && !Ruta.completo(p.clave));
   document.getElementById('pendientes').innerHTML = falta.length
-    ? `<div class="aviso no-imprimir">Te falta completar: ${falta.map(p => `<a href="${p.archivo}">paso ${p.n} (${p.corto})</a>`).join(', ')}. Tu reporte mostrará solo lo que ya tengas.</div>` : '';
+    ? `<div class="aviso no-imprimir">Te falta completar: ${falta.map(p => `<a href="${p.archivo}">${p.corto}</a>`).join(', ')}. Tu reporte mostrará solo lo que ya tengas.</div>` : '';
 
   const NI = Object.fromEntries(D.catInt), NA = Object.fromEntries(D.catApt);
   // 1
   const hm = e.hm, ip = e.interp;
   const pI = (hm && hm.completado) ? hm.pctInt : ip && ip.pctInt, pA = (hm && hm.completado) ? hm.pctApt : ip && ip.pctApt;
   document.getElementById('s-hm').innerHTML = pI
-    ? `<span class="etiqueta">Paso 1: Herrera y Montes</span><h2>Mis intereses y aptitudes</h2><div class="rejilla dos">
+    ? `<span class="etiqueta">Herrera y Montes</span><h2>Mis intereses y aptitudes</h2><div class="rejilla dos">
         <div><h3>Intereses</h3>${Ruta.barras(D.catInt.map(([k, n]) => ({ clave: k, nombre: n, valor: pI[k] })), { resaltar: ip && ip.completado ? [ip.int1, ip.int2] : [] })}</div>
         <div><h3>Aptitudes</h3>${Ruta.barras(D.catApt.map(([k, n]) => ({ clave: k, nombre: n, valor: pA[k] })), { resaltar: ip && ip.completado ? [ip.apt] : [], clase: 'apt' })}</div></div>`
-    : `<h2>Paso 1: Herrera y Montes</h2><p class="sub">Pendiente.</p>`;
+    : `<h2>Herrera y Montes</h2><p class="sub">Pendiente.</p>`;
   // 2
   document.getElementById('s-interp').innerHTML = ip && ip.completado
-    ? `<span class="etiqueta">Paso 2: Interpretación</span><h2>${NI[ip.int1]} y ${NI[ip.int2]}, con aptitud ${NA[ip.apt]}</h2>
+    ? `<span class="etiqueta">Interpretación de Herrera y Montes</span><h2>${NI[ip.int1]} y ${NI[ip.int2]}, con aptitud ${NA[ip.apt]}</h2>
        ${ip.alternativa ? `<p class="sub">Se usó la combinación más cercana disponible: ${NI[ip.combUsada[0]]} + ${NI[ip.combUsada[1]]}.</p>` : ''}
        ${ip.coinciden.length ? `<h3>Coinciden gusto y capacidad</h3><div class="chips" style="margin-bottom:10px">${ip.coinciden.map(c => `<span class="chip marcada">${c}</span>`).join('')}</div>` : ''}
        <h3>Por mis intereses</h3><div class="chips" style="margin-bottom:10px">${ip.carrerasInt.map(c => `<span class="chip">${c}</span>`).join('')}</div>
        <h3>Por mi aptitud</h3><div class="chips">${ip.carrerasApt.map(c => `<span class="chip">${c}</span>`).join('')}</div>`
-    : `<h2>Paso 2: Interpretación</h2><p class="sub">Pendiente.</p>`;
-  // 3
+    : `<h2>Interpretación</h2><p class="sub">Pendiente.</p>`;
+  // CHASIDE y Holland
+  const TT = window.TESTS, ch = e.chaside, ho = e.holland;
+  document.getElementById('s-chaside').innerHTML = ch && ch.completado
+    ? `<span class="etiqueta">CHASIDE</span><h2>${ch.top.slice(0, 2).map(id => TT.chaside.areas.find(a => a.id === id).nombre).join(' y ')}</h2>
+       ${Ruta.barras(TT.chaside.areas.map(a => ({ clave: a.id, nombre: a.nombre, valor: Math.round(ch.totales[a.id].t / 14 * 100), texto: ch.totales[a.id].t + '/14' })).sort((x, y) => y.valor - x.valor), { resaltar: ch.top.slice(0, 2) })}
+       <p class="sub" style="margin:12px 0 0">Interés más alto: ${TT.chaside.areas.find(a => a.id === ch.topInt).nombre}. Aptitud más alta: ${TT.chaside.areas.find(a => a.id === ch.topApt).nombre}.</p>`
+    : `<h2>CHASIDE</h2><p class="sub">Pendiente.</p>`;
+  document.getElementById('s-holland').innerHTML = ho && ho.completado
+    ? `<span class="etiqueta">Holland</span><h2>Código ${ho.codigo}: ${ho.top.map(id => TT.holland.tipos.find(t => t.id === id).nombre).join(', ')}</h2>
+       <p style="margin:0">${TT.holland.tipos.find(t => t.id === ho.top[0]).desc}</p>
+       ${ho.empate.length ? `<p class="sub" style="margin:8px 0 0">Empate en el tercer lugar: ${ho.empate.map(id => TT.holland.tipos.find(t => t.id === id).nombre).join(', ')}.</p>` : ''}`
+    : `<h2>Holland</h2><p class="sub">Pendiente.</p>`;
+  // EVAPEM
   const ev = e.evapem;
   document.getElementById('s-evapem').innerHTML = ev && ev.completado
-    ? `<span class="etiqueta">Paso 3: EVAPEM IV</span><h2>Áreas y carreras más afines</h2><div class="rejilla dos">
+    ? `<span class="etiqueta">EVAPEM IV</span><h2>Áreas y carreras más afines</h2><div class="rejilla dos">
         <div><h3>Por área</h3>${Ruta.barras(ev.areas, { resaltar: [ev.areas[0].clave] })}</div>
         <div><h3>Top 10</h3><ol style="margin:0;padding-left:20px">${ev.top.slice(0, 10).map(c => `<li>${Ruta.esc(c.n)}, <b>${c.afin}%</b></li>`).join('')}</ol></div></div>`
-    : `<h2>Paso 3: EVAPEM</h2><p class="sub">Pendiente.</p>`;
+    : `<h2>EVAPEM</h2><p class="sub">Pendiente.</p>`;
   // 4
   const op = e.optativas;
   const tit = id => (D.areas.find(a => a.id === id) || {}).titulo;
   document.getElementById('s-opt').innerHTML = op && (op.elegidas || []).length
-    ? `<span class="etiqueta">Paso 4: optativas de ${op.catalogo}.º semestre</span><h2>Mis optativas</h2><div class="chips" style="margin-bottom:10px">${op.elegidas.map(o => `<span class="chip marcada">${o}</span>`).join('')}</div>
+    ? `<span class="etiqueta">Optativas de ${op.catalogo}.º semestre</span><h2>Mis optativas</h2><div class="chips" style="margin-bottom:10px">${op.elegidas.map(o => `<span class="chip marcada">${o}</span>`).join('')}</div>
        ${op.sugeridas && op.sugeridas.length ? `<p class="sub" style="margin:0">Áreas sugeridas por mis resultados: ${op.sugeridas.map(tit).join(', ')}</p>` : ''}`
-    : `<h2>Paso 4: Optativas</h2><p class="sub">Pendiente.</p>`;
+    : `<h2>Optativas</h2><p class="sub">Pendiente.</p>`;
 
   const r = e.reflexion || {};
+  window.autollenar = function () {
+    const x = { ref1: 'Quiero investigar más las carreras que aparecieron en varios tests a la vez. (Texto de prueba)', ref2: 'Me sorprendió que mis intereses y mis aptitudes no siempre coinciden. (Texto de prueba)' };
+    Ruta.guardar('reflexion', x); document.getElementById('ref1').value = x.ref1; document.getElementById('ref2').value = x.ref2;
+  };
   ['ref1', 'ref2'].forEach(id => { const t = document.getElementById(id); t.value = r[id] || ''; t.addEventListener('input', () => { const x = Ruta.obtener('reflexion') || {}; x[id] = t.value; Ruta.guardar('reflexion', x); }); });
 }
 </script>

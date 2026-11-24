@@ -13,7 +13,7 @@
   <!-- Instrucciones -->
   <section id="v-inicio">
     <div class="intro">
-    <span class="paso">Paso 1 de 5</span>
+    <span class="paso" data-paso></span>
     <h1>Cuestionario de Intereses y Aptitudes</h1>
     <p class="sub">Modelo de Luis Herrera y Montes, actualizado para estudiantes de bachillerato. Son dos secciones de 60 preguntas; te toma entre 20 y 30 minutos.</p>
     </div>
@@ -67,7 +67,7 @@
   <!-- Resultados -->
   <section id="v-resultados" class="oculto">
     <div class="intro" style="max-width:none">
-      <span class="paso">Resultados del paso 1</span>
+      <span class="paso">Resultados</span>
       <h1>Tu perfil de intereses y aptitudes</h1>
       <p class="sub" id="r-ficha"></p>
       <div class="aviso">Las líneas verticales de cada barra marcan el 50 % y el 75 %. Según el manual, de 75 % a 100 % son <b>intereses profesionales</b> y <b>aptitudes desarrolladas</b>.</div>
@@ -78,7 +78,7 @@
     </div>
     <div class="tarjeta" id="r-perfil-bajo"></div>
     <div class="acciones no-imprimir">
-      <a class="btn" href="paso2-interpretacion.html">Continuar al paso 2: Interpretación</a>
+      <a class="btn" data-siguiente href="interpretacion.html">Continuar</a>
       <button class="btn sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
       <button class="btn sec" type="button" id="btn-revisar">Revisar mis respuestas</button>
     </div>
@@ -86,8 +86,9 @@
 </main>
 <script src="assets/datos.js"></script>
 <script src="assets/ruta.js"></script>
+<script src="assets/revision.js"></script>
 <script>
-Ruta.montarEncabezado(1);
+Ruta.montarEncabezado('herrera-montes.html');
 const D = window.DATOS;
 const ESCALAS = {
   int: [[4,'Me gusta mucho'],[3,'Me gusta algo o en parte'],[2,'Me es indiferente'],[1,'Me desagrada algo'],[0,'Me desagrada mucho']],
@@ -212,6 +213,15 @@ function mostrarResultados() {
   caja.innerHTML = notas.length ? '<h3>Para tomar en cuenta</h3>' + notas.map(n => `<p>${n}</p>`).join('') : '';
   caja.classList.toggle('oculto', !notas.length);
 }
+
+/* Modo de revisión: respuestas de ejemplo con dos columnas fuertes elegidas al azar */
+window.autollenar = function () {
+  const cols = [0,1,2,3,4,5,6,7,8,9].sort(() => Math.random() - .5);
+  const fi = cols.slice(0, 2), fa = [cols[Math.random() < .5 ? 0 : 2]];
+  const gen = fuertes => Array.from({ length: 60 }, (_, i) => fuertes.includes(i % 10) ? 3 + Math.round(Math.random()) : Math.floor(Math.random() * 3));
+  st = { respInt: gen(fi), respApt: gen(fa) }; seccion = 'int'; idx = 0;
+  calcular(); mostrarResultados();
+};
 </script>
 </body>
 </html>

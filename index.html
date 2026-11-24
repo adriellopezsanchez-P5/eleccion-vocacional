@@ -13,10 +13,10 @@
   <section class="portada">
     <div>
       <h1>Antes de elegir carrera, conócete.</h1>
-      <p class="bajada">Cinco pasos para descubrir qué te gusta, qué se te facilita y qué optativas te acercan a la carrera que buscas. Cada paso usa lo que respondiste en el anterior.</p>
+      <p class="bajada">Siete pasos para descubrir qué te gusta, qué se te facilita y qué optativas te acercan a la carrera que buscas. Cada paso usa lo que respondiste en el anterior.</p>
       <div class="acciones">
         <a class="btn" id="btn-continuar" href="#ficha">Registrar mis datos</a>
-        <a class="btn sec" href="paso4-optativas.html">Ver el catálogo de optativas</a>
+        <a class="btn sec" href="optativas.html">Ver el catálogo de optativas</a>
       </div>
       <p class="sub" style="margin-top:22px;font-size:.95rem;max-width:34em">Ningún resultado es un dictamen: es información para conversar con tu orientador(a). La decisión siempre es tuya.</p>
     </div>
@@ -54,15 +54,16 @@
 </main>
 <script src="assets/datos.js"></script>
 <script src="assets/ruta.js"></script>
+<script src="assets/revision.js"></script>
 <script>
-Ruta.montarEncabezado(0);
+Ruta.montarEncabezado('index.html');
 const campos = ['nombre','cuenta','grupo','semestre','docente','edad','sexo'];
 const a = Ruta.alumno();
 if (a) campos.forEach(c => { document.getElementById(c).value = a[c] || ''; });
 
 function siguientePaso() {
   for (const p of Ruta.PASOS) if (p.clave && !Ruta.completo(p.clave)) return p.archivo;
-  return 'paso5-mi-ruta.html';
+  return 'reporte.html';
 }
 
 document.getElementById('form-alumno').addEventListener('submit', e => {
@@ -84,11 +85,13 @@ document.getElementById('btn-borrar').addEventListener('click', () => {
 });
 
 const DESCR = {
-  1: '120 preguntas sobre lo que te gusta y lo que se te facilita. Puedes pausar y continuar después.',
-  2: 'Tus dos intereses más altos y tu aptitud principal se cruzan con las tablas de carreras del manual.',
-  3: 'Marcas los 10 rasgos más altos de tu gráfica EVAPEM y los comparas con 80 opciones educativas.',
-  4: 'Ves qué optativas te convienen según las carreras que salieron en los pasos anteriores.',
-  5: 'Un solo reporte con todo tu proceso, listo para imprimir o guardar en PDF.'
+  'herrera-montes.html': '120 preguntas sobre lo que te gusta y lo que se te facilita. Puedes pausar y continuar después.',
+  'interpretacion.html': 'Tus dos intereses más altos y tu aptitud principal se cruzan con las tablas de carreras del manual.',
+  'chaside.html': '98 preguntas de sí o no que ubican tus intereses y aptitudes en siete áreas profesionales.',
+  'holland.html': 'Te describes con adjetivos, habilidades y metas para obtener tu código de personalidad vocacional.',
+  'evapem.html': 'Marcas los 10 rasgos más altos de tu gráfica EVAPEM y los comparas con 80 opciones educativas.',
+  'optativas.html': 'Ves qué optativas te convienen según todo lo que salió en los pasos anteriores.',
+  'reporte.html': 'Un solo reporte con todo tu proceso, listo para imprimir o guardar en PDF.'
 };
 const sig = siguientePaso();
 document.getElementById('mapa').innerHTML = Ruta.PASOS.filter(p => p.n > 0).map(p => {
@@ -96,10 +99,10 @@ document.getElementById('mapa').innerHTML = Ruta.PASOS.filter(p => p.n > 0).map(
   const cls = ok ? 'ok' : (a && p.archivo === sig ? 'sig' : '');
   return `<li class="${cls}"><span class="parada">${ok ? '✓' : p.n}</span>
     <a href="${p.archivo}">${p.corto === 'Mi reporte' ? 'Tu reporte final' : p.corto}</a>${ok ? '<span class="estado">Completado</span>' : ''}
-    <p>${DESCR[p.n]}</p></li>`;
+    <p>${DESCR[p.archivo]}</p></li>`;
 }).join('');
 const btn = document.getElementById('btn-continuar');
-if (a) { btn.href = sig; btn.textContent = Ruta.completo('hm') ? 'Continuar donde me quedé' : 'Comenzar el paso 1'; }
+if (a) { btn.href = sig; btn.textContent = Ruta.completo('hm') ? 'Continuar donde me quedé' : 'Comenzar con Herrera y Montes'; }
 </script>
 </body>
 </html>

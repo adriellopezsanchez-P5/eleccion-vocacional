@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test CHASIDE | Elección Vocacional</title>
+<link rel="preload" href="assets/fuentes/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/estilos.css">
+</head>
+<body>
+<main class="contenedor" id="app">
+
+  <section id="v-inicio">
+    <div class="intro">
+      <span class="paso" data-paso></span>
+      <h1>Test de orientación vocacional CHASIDE</h1>
+      <p class="sub">98 preguntas de sí o no. Cada una corresponde a una de siete áreas profesionales y mide un interés o una aptitud. Te toma unos 15 minutos.</p>
+    </div>
+    <div class="tarjeta">
+      <h2>Antes de empezar</h2>
+      <p>Para contestar, piensa en el tipo de profesión o en la actitud que implica cada pregunta. Responde con sinceridad, no con lo que crees que se espera de ti.</p>
+      <div class="chips" style="margin-bottom:12px">
+        <span class="chip">Administrativa (C)</span><span class="chip">Humanidades y Ciencias Sociales (H)</span><span class="chip">Artística (A)</span><span class="chip">Ciencias de la Salud (S)</span><span class="chip">Ingenierías (I)</span><span class="chip">Defensa y Seguridad (D)</span><span class="chip">Ciencias Experimentales (E)</span>
+      </div>
+      <div class="aviso info">Tus respuestas se guardan en cuanto las marcas. Con el teclado: <b>S</b> para sí, <b>N</b> para no, y flechas ← → para moverte.</div>
+      <div class="acciones">
+        <button class="btn" id="btn-comenzar" type="button">Comenzar</button>
+        <button class="btn sec oculto" id="btn-reiniciar" type="button">Volver a empezar desde cero</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-test" class="tarjeta oculto" aria-live="polite">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+      <h2 style="margin:0">CHASIDE</h2>
+      <span class="sub" id="t-contador">1 / 98</span>
+    </div>
+    <div class="progreso" aria-hidden="true"><div id="t-barra" style="width:0"></div></div>
+    <p class="pregunta"><span id="t-num">1.</span> <span id="t-texto"></span></p>
+    <fieldset style="border:0;padding:0;margin:0">
+      <legend class="sr">Responde sí o no</legend>
+      <div class="opciones" id="t-opciones" style="grid-template-columns:repeat(2,minmax(0,220px))">
+        <input type="radio" name="op" id="op-si" value="1"><label for="op-si"><b>Sí</b></label>
+        <input type="radio" name="op" id="op-no" value="0"><label for="op-no"><b>No</b></label>
+      </div>
+    </fieldset>
+    <div class="acciones" style="justify-content:space-between">
+      <button class="btn sec" id="btn-ant" type="button">Anterior</button>
+      <span class="sub" id="t-faltan" style="align-self:center;font-size:.92rem"></span>
+      <button class="btn sec" id="btn-sig" type="button">Siguiente</button>
+    </div>
+  </section>
+
+  <section id="v-resultados" class="oculto">
+    <div class="intro" style="max-width:none">
+      <span class="paso">Resultados</span>
+      <h1>Tus áreas CHASIDE</h1>
+      <p class="sub" id="r-ficha"></p>
+    </div>
+    <div class="solo-impresion tarjeta">Departamento de Orientación Educativa, Plantel "Dr. Ángel Ma. Garibay Kintana", UAEMéx. Test CHASIDE.</div>
+    <div class="rejilla dos">
+      <div class="tarjeta"><h2>Puntaje por área</h2><p class="sub" style="font-size:.95rem">Preguntas contestadas con "sí" de las 14 de cada área.</p><div id="r-total"></div></div>
+      <div class="tarjeta"><h2>Intereses y aptitudes</h2><p class="sub" style="font-size:.95rem">De cada área, 10 preguntas miden intereses y 4 miden aptitudes.</p><div id="r-tabla"></div></div>
+    </div>
+    <div id="r-top"></div>
+    <div class="tarjeta" id="r-lectura"></div>
+    <div class="aviso">Los resultados son una referencia para reflexionar, no un dictamen. Compártelos con tu orientador(a) y compruébalos con alguien que te conozca bien.</div>
+    <div class="acciones no-imprimir">
+      <a class="btn" data-siguiente href="holland.html">Continuar</a>
+      <button class="btn sec" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
+      <button class="btn sec" type="button" id="btn-revisar">Revisar mis respuestas</button>
+    </div>
+  </section>
+</main>
+<script src="assets/datos.js"></script>
+<script src="assets/datos-tests.js"></script>
+<script src="assets/ruta.js"></script>
+<script src="assets/revision.js"></script>
+<script>
+Ruta.montarEncabezado('chaside.html');
+const T = window.TESTS.chaside, N = T.preguntas.length;
+const AREA = Object.fromEntries(T.areas.map(a => [a.id, a]));
+const app = document.getElementById('app');
+const vistas = ['v-inicio', 'v-test', 'v-resultados'];
+function ver(id) { vistas.forEach(v => document.getElementById(v).classList.toggle('oculto', v !== id)); window.scrollTo(0, 0); }
+
+let st = Ruta.obtener('chaside') || {};
+st.resp = st.resp || Array(N).fill(null);
+let idx = st.idx || 0;
+const guardarAvance = () => { st.idx = idx; Ruta.guardar('chaside', st); };
+
+if (Ruta.exigirAlumno(app)) {
+  if (st.completado) mostrarResultados();
+  else if (st.resp.some(v => v !== null)) { document.getElementById('btn-comenzar').textContent = 'Continuar donde me quedé'; document.getElementById('btn-reiniciar').classList.remove('oculto'); }
+}
+document.getElementById('btn-comenzar').onclick = () => { ver('v-test'); cargar(); };
+document.getElementById('btn-reiniciar').onclick = () => { if (!confirm('Se borrarán tus 98 respuestas. ¿Continuar?')) return; st = { resp: Array(N).fill(null) }; idx = 0; guardarAvance(); ver('v-test'); cargar(); };
+document.getElementById('btn-revisar').onclick = () => { idx = 0; ver('v-test'); cargar(); };
+
+function cargar() {
+  document.getElementById('t-contador').textContent = `${idx + 1} / ${N}`;
+  document.getElementById('t-barra').style.width = (st.resp.filter(v => v !== null).length / N * 100) + '%';
+  document.getElementById('t-num').textContent = (idx + 1) + '.';
+  document.getElementById('t-texto').textContent = T.preguntas[idx];
+  document.getElementById('op-si').checked = st.resp[idx] === 1;
+  document.getElementById('op-no').checked = st.resp[idx] === 0;
+  const faltan = st.resp.filter(v => v === null).length;
+  document.getElementById('t-faltan').textContent = faltan ? `Te faltan ${faltan}` : 'Todas contestadas';
+  document.getElementById('btn-ant').disabled = idx === 0;
+  document.getElementById('btn-sig').textContent = idx === N - 1 ? 'Ver resultados' : 'Siguiente';
+}
+let temp = null;
+function responder(v) { st.resp[idx] = v; guardarAvance(); if (st.completado) calcular(); clearTimeout(temp); temp = setTimeout(avanzar, 200); }
+['op-si', 'op-no'].forEach(id => document.getElementById(id).addEventListener('change', e => responder(+e.target.value)));
+function avanzar() {
+  if (idx < N - 1) { idx++; guardarAvance(); cargar(); return; }
+  const pend = st.resp.findIndex(v => v === null);
+  if (pend !== -1) { idx = pend; cargar(); document.getElementById('t-faltan').textContent = 'Aún falta esta pregunta por contestar.'; return; }
+  calcular(); mostrarResultados();
+}
+document.getElementById('btn-sig').onclick = avanzar;
+document.getElementById('btn-ant').onclick = () => { if (idx > 0) { idx--; guardarAvance(); cargar(); } };
+document.addEventListener('keydown', e => {
+  if (document.getElementById('v-test').classList.contains('oculto') || e.target.matches('input[type=text],textarea')) return;
+  const k = e.key.toLowerCase();
+  if (k === 's' || k === 'n') { const id = k === 's' ? 'op-si' : 'op-no'; document.getElementById(id).checked = true; responder(k === 's' ? 1 : 0); }
+  else if (e.key === 'ArrowRight' && st.resp[idx] !== null) avanzar();
+  else if (e.key === 'ArrowLeft' && idx > 0) { idx--; cargar(); }
+});
+
+/* Calificación según el cuadro del formato: cada "sí" vale un punto en el área y tipo (interés/aptitud) de su número. */
+function calcular() {
+  const tot = {}; T.areas.forEach(a => tot[a.id] = { i: 0, a: 0, t: 0 });
+  st.resp.forEach((v, i) => { if (v === 1) { const [area, tipo] = T.clave[i + 1]; tot[area][tipo]++; tot[area].t++; } });
+  const orden = T.areas.map((a, k) => ({ id: a.id, ...tot[a.id], k })).sort((x, y) => y.t - x.t || y.i - x.i || x.k - y.k);
+  const corte = orden[1].t;
+  const top = orden.filter(x => x.t >= corte && x.t > 0).map(x => x.id);
+  const topInt = [...orden].sort((x, y) => y.i - x.i || x.k - y.k)[0].id;
+  const topApt = [...orden].sort((x, y) => y.a - x.a || x.k - y.k)[0].id;
+  Object.assign(st, { totales: tot, top, topInt, topApt, completado: new Date().toISOString() });
+  delete st.idx; Ruta.guardar('chaside', st);
+}
+
+function mostrarResultados() {
+  ver('v-resultados');
+  const al = Ruta.alumno(), tot = st.totales;
+  document.getElementById('r-ficha').textContent = `${al.nombre}, grupo ${al.grupo}. ${Ruta.fecha(st.completado)}`;
+  const items = T.areas.map(a => ({ clave: a.id, nombre: `${a.nombre} (${a.id})`, valor: Math.round(tot[a.id].t / 14 * 100), texto: `${tot[a.id].t}/14` }))
+    .sort((x, y) => tot[y.clave].t - tot[x.clave].t);
+  document.getElementById('r-total').innerHTML = Ruta.barras(items, { resaltar: st.top.slice(0, 2) });
+  document.getElementById('r-tabla').innerHTML = `<table><thead><tr><th>Área</th><th class="num">Intereses</th><th class="num">Aptitudes</th><th class="num">Total</th></tr></thead><tbody>${T.areas.map(a => `<tr><td>${a.nombre} (${a.id})</td><td class="num">${tot[a.id].i}/10</td><td class="num">${tot[a.id].a}/4</td><td class="num"><b>${tot[a.id].t}</b></td></tr>`).join('')}</tbody></table>`;
+  const empate = st.top.length > 2;
+  document.getElementById('r-top').innerHTML = (empate ? `<div class="aviso">Hay un empate en el segundo lugar; se muestran todas las áreas empatadas.</div>` : '') +
+    `<div class="rejilla dos">${st.top.map((id, i) => { const a = AREA[id]; return `<div class="tarjeta ${i === 0 ? 'oro' : ''}">
+      <span class="etiqueta">${i === 0 ? 'Área con mayor puntuación' : 'Siguiente área'}</span><h2>${a.nombre} (${a.id})</h2>
+      <p style="margin-bottom:6px"><b>Intereses del área:</b> ${a.intereses.join(', ')}.</p>
+      <p style="margin-bottom:10px"><b>Aptitudes del área:</b> ${a.aptitudes.join(', ')}.</p>
+      <div class="chips">${a.carreras.map(c => `<span class="chip">${c}</span>`).join('')}</div>
+      <p class="sub" style="font-size:.85rem;margin:8px 0 0">Carreras de ejemplo del área.</p></div>`; }).join('')}</div>`;
+  const ai = AREA[st.topInt], aa = AREA[st.topApt];
+  document.getElementById('r-lectura').innerHTML = `<h2>Interés y aptitud</h2>` + (st.topInt === st.topApt
+    ? `<p>Tu interés más alto y tu aptitud más alta están en la misma área: <b>${ai.nombre}</b>. Es una señal consistente: te gusta y te consideras capaz.</p>`
+    : `<p>Tu interés más alto está en <b>${ai.nombre}</b> y tu aptitud más alta en <b>${aa.nombre}</b>. Cuando no coinciden, conviene preguntarte qué carreras combinan las dos cosas y comentarlo con tu orientador(a).</p>`) +
+    `<p class="sub" style="margin:0">El formato sugiere comprobar con un compañero(a) o familiar si tienes las cualidades que aparecen en tus áreas.</p>`;
+}
+
+/* Modo de revisión: respuestas de ejemplo coherentes (perfil con dos áreas fuertes) */
+window.autollenar = function () {
+  const fuertes = ['S', 'E'];
+  st = { resp: Array.from({ length: N }, (_, i) => { const [area] = T.clave[i + 1]; return fuertes.includes(area) ? (Math.random() < .85 ? 1 : 0) : (Math.random() < .3 ? 1 : 0); }) };
+  calcular(); mostrarResultados();
+};
+</script>
+</body>
+</html>
